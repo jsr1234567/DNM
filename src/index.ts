@@ -288,8 +288,15 @@ async function runMessageLoop() {
         let reply = command.reply;
         if (!command.handled) {
           reply = await generateSessionReply(db, llm, user.id, space.id);
-          const extraction = await extractBountyDrafts(db, llm, user.id);
-          if (extraction.created[0]) reply += `\n\n${draftPrompt(extraction.created[0])}`;
+          try {
+            const extraction = await extractBountyDrafts(db, llm, user.id);
+            if (extraction.created[0]) reply += `\n\n${draftPrompt(extraction.created[0])}`;
+          } catch (error) {
+            console.warn(
+              "Bounty extraction skipped; sending the assistant reply without a draft.",
+              error instanceof Error ? error.message : error,
+            );
+          }
         }
         if (!reply) throw new Error("No reply was produced");
         const outbound = await space.send(reply);
