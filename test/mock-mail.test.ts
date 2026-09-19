@@ -41,7 +41,7 @@ describe("mock mail connector", () => {
     expect(second).toEqual(first);
     expect((db.query("SELECT count(*) AS count FROM mock_mailboxes").get() as { count: number }).count).toBe(personas.length);
     expect((db.query("SELECT count(*) AS count FROM email_messages").get() as { count: number }).count).toBe(expectedMessages);
-    expect(searchEmail(db, "security summary")[0]?.sender).toContain("Ana Ruiz");
-    expect(searchEmail(db, "quiet").some((result) => result.sender.includes("Casey Morgan"))).toBe(true);
+    expect(searchEmail(db, "fixture:busy-founder", "security summary")[0]?.sender).toContain("Ana Ruiz");
+    expect(searchEmail(db, "fixture:social-organizer", "quiet").some((result) => result.sender.includes("Casey Morgan"))).toBe(true);
   });
 });

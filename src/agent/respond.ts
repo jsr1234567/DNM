@@ -2,6 +2,7 @@ import type { Database } from "bun:sqlite";
 import type { StructuredCompletionClient } from "../ai/openrouter.ts";
 import { recentUserMessages } from "../chat/history.ts";
 import { listActiveMemories } from "../memory/index.ts";
+import { getUser } from "../users/index.ts";
 
 const MAX_EMAIL_BODY_CHARS = 6_000;
 
@@ -14,6 +15,11 @@ interface RecentEmail {
 }
 
 export interface SessionContext {
+  profile: {
+    name: string;
+    email?: string;
+    description?: string;
+  };
   userMessages: Array<{ content: string; occurredAt: string }>;
   memories: Array<{
     kind: string;
@@ -24,13 +30,23 @@ export interface SessionContext {
   emails: RecentEmail[];
 }
 
-export function loadSessionContext(db: Database, conversationId: string): SessionContext {
+export function loadSessionContext(db: Database, userId: string, conversationId: string): SessionContext {
+  const user = getUser(db, userId);
+  if (!user) throw new Error("Active session user not found");
+  const mailbox = db.query(`
+    SELECT m.email, mm.description FROM mailboxes m
+    LEFT JOIN mock_mailboxes mm ON mm.id = m.id
+    WHERE m.user_id = ? AND m.status = 'active'
+    ORDER BY CASE m.source WHEN 'gmail' THEN 0 ELSE 1 END, m.created_at
+    LIMIT 1
+  `).get(userId) as { email: string; description: string | null } | null;
   const emailRows = db.query(`
     SELECT sender, recipients_json, subject, sent_at, internal_date_ms, normalized_body
     FROM email_messages
+    WHERE user_id = ?
     ORDER BY internal_date_ms DESC, id DESC
     LIMIT 3
-  `).all() as Array<{
+  `).all(userId) as Array<{
     sender: string;
     recipients_json: string;
     subject: string;
@@ -40,8 +56,13 @@ export function loadSessionContext(db: Database, conversationId: string): Sessio
   }>;
 
   return {
-    userMessages: recentUserMessages(db, conversationId, 3),
-    memories: listActiveMemories(db).map((memory) => ({
+    profile: {
+      name: user.displayName,
+      email: user.profileEmail ?? mailbox?.email,
+      description: mailbox?.description ?? undefined,
+    },
+    userMessages: recentUserMessages(db, userId, conversationId, 3),
+    memories: listActiveMemories(db, userId).map((memory) => ({
       kind: memory.kind,
       claim: memory.claim,
       origin: memory.origin,
@@ -60,9 +81,10 @@ export function loadSessionContext(db: Database, conversationId: string): Sessio
 export async function generateSessionReply(
   db: Database,
   client: StructuredCompletionClient,
+  userId: string,
   conversationId: string,
 ): Promise<string> {
-  const context = loadSessionContext(db, conversationId);
+  const context = loadSessionContext(db, userId, conversationId);
   const result = await client.complete<{ reply: string }>({
     name: "imessage_reply",
     schema: {

@@ -1,6 +1,5 @@
 import { chmod } from "node:fs/promises";
-import { resolve } from "node:path";
-import { ensurePrivateDataDir, gmailTokenPath } from "../config.ts";
+import { ensurePrivateUserDataDir, gmailTokenPathForUser } from "../config.ts";
 
 interface GoogleWebCredentials {
   client_id: string;
@@ -22,15 +21,6 @@ interface TokenResponse {
   scope?: string;
 }
 
-const legacyTokenPath = resolve(".gmail-token.json");
-
-async function existingTokenPath(): Promise<string> {
-  if (await Bun.file(gmailTokenPath).exists()) return gmailTokenPath;
-  // Compatibility with the existing OAuth UI. New connections should use .data/.
-  if (await Bun.file(legacyTokenPath).exists()) return legacyTokenPath;
-  return gmailTokenPath;
-}
-
 async function loadCredentials(): Promise<GoogleWebCredentials> {
   const path = process.env.GOOGLE_OAUTH_CREDENTIALS_FILE;
   if (!path) throw new Error("GOOGLE_OAUTH_CREDENTIALS_FILE is not configured");
@@ -39,21 +29,22 @@ async function loadCredentials(): Promise<GoogleWebCredentials> {
   return document.web;
 }
 
-async function loadTokens(): Promise<{ tokens: StoredTokens; path: string }> {
-  const path = await existingTokenPath();
+async function loadTokens(userId: string): Promise<{ tokens: StoredTokens; path: string }> {
+  const path = gmailTokenPathForUser(userId);
   const file = Bun.file(path);
   if (!(await file.exists())) throw new Error("Gmail is not connected; complete local OAuth first");
+  await chmod(path, 0o600);
   return { tokens: (await file.json()) as StoredTokens, path };
 }
 
-async function saveTokens(path: string, tokens: StoredTokens): Promise<void> {
-  await ensurePrivateDataDir();
+async function saveTokens(userId: string, path: string, tokens: StoredTokens): Promise<void> {
+  await ensurePrivateUserDataDir(userId);
   await Bun.write(path, `${JSON.stringify(tokens, null, 2)}\n`);
   await chmod(path, 0o600);
 }
 
-export async function gmailAccess(): Promise<{ token: string; mailboxEmail?: string }> {
-  const { tokens, path } = await loadTokens();
+export async function gmailAccess(userId: string): Promise<{ token: string; mailboxEmail?: string }> {
+  const { tokens, path } = await loadTokens(userId);
   if (tokens.expires_at > Date.now() + 60_000) {
     return { token: tokens.access_token, mailboxEmail: tokens.email };
   }
@@ -78,7 +69,7 @@ export async function gmailAccess(): Promise<{ token: string; mailboxEmail?: str
     expires_at: Date.now() + refreshed.expires_in * 1000,
     scope: refreshed.scope ?? tokens.scope,
   };
-  await saveTokens(path, next);
+  await saveTokens(userId, path, next);
   return { token: next.access_token, mailboxEmail: next.email };
 }
 

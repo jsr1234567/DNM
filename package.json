@@ -10,8 +10,12 @@
     "db:seed:mock": "bun scripts/seed-mock-mailboxes.ts",
     "db:reindex": "bun scripts/rebuild-indexes.ts",
     "db:reset": "bun scripts/reset-local-data.ts",
+    "db:reset:user": "bun scripts/reset-user-data.ts",
+    "users:add": "bun scripts/add-local-user.ts",
     "gmail:import": "bun scripts/import-gmail.ts",
     "memory:generate": "bun scripts/generate-memory.ts",
+    "bounties:generate": "bun scripts/generate-bounties.ts",
+    "bounties:match": "bun scripts/match-bounties.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

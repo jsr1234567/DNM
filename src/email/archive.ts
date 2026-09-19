@@ -19,6 +19,11 @@ export interface ArchivedEmail {
   labels?: string[];
 }
 
+export interface EmailOwner {
+  userId: string;
+  mailboxId: string;
+}
+
 export interface ArchiveResult {
   messageId: number;
   chunkCount: number;
@@ -52,7 +57,8 @@ export function chunkText(text: string, maxChars = 1_200, overlapChars = 150): s
   return chunks.filter(Boolean);
 }
 
-export function archiveEmail(db: Database, email: ArchivedEmail): ArchiveResult {
+export function archiveEmail(db: Database, owner: EmailOwner, email: ArchivedEmail): ArchiveResult {
+  if (!owner.userId || !owner.mailboxId) throw new Error("Email owner and mailbox are required");
   if (!email.providerMessageId || !email.providerThreadId || !email.mailboxEmail) {
     throw new Error("Email provider IDs and mailbox are required");
   }
@@ -62,11 +68,12 @@ export function archiveEmail(db: Database, email: ArchivedEmail): ArchiveResult 
   return db.transaction(() => {
     db.query(`
       INSERT INTO email_messages(
-        provider_message_id, provider_thread_id, mailbox_email, rfc_message_id,
+        user_id, mailbox_id, provider_message_id, provider_thread_id, mailbox_email, rfc_message_id,
         sent_at, internal_date_ms, sender, recipients_json, cc_json, bcc_json,
         subject, normalized_body, snippet, labels_json, imported_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(provider_message_id) DO UPDATE SET
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(user_id, provider_message_id) DO UPDATE SET
+        mailbox_id = excluded.mailbox_id,
         provider_thread_id = excluded.provider_thread_id,
         mailbox_email = excluded.mailbox_email,
         rfc_message_id = excluded.rfc_message_id,
@@ -82,6 +89,8 @@ export function archiveEmail(db: Database, email: ArchivedEmail): ArchiveResult 
         labels_json = excluded.labels_json,
         updated_at = excluded.updated_at
     `).run(
+      owner.userId,
+      owner.mailboxId,
       email.providerMessageId,
       email.providerThreadId,
       email.mailboxEmail.toLowerCase(),
@@ -101,8 +110,8 @@ export function archiveEmail(db: Database, email: ArchivedEmail): ArchiveResult 
     );
 
     const row = db.query(
-      "SELECT id FROM email_messages WHERE provider_message_id = ?",
-    ).get(email.providerMessageId) as { id: number };
+      "SELECT id FROM email_messages WHERE user_id = ? AND provider_message_id = ?",
+    ).get(owner.userId, email.providerMessageId) as { id: number };
 
     const oldChunkIds = db.query("SELECT id FROM chunks WHERE email_message_id = ?").all(row.id) as Array<{
       id: number;

@@ -10,6 +10,7 @@ export interface ConnectorSyncResult {
 
 export async function syncMailConnector(
   db: Database,
+  owner: { userId: string; mailboxId: string },
   connector: MailConnector,
   pageSize = 25,
 ): Promise<ConnectorSyncResult> {
@@ -23,7 +24,7 @@ export async function syncMailConnector(
       if (message.mailboxEmail.toLowerCase() !== profile.email.toLowerCase()) {
         throw new Error(`Connector returned a message for the wrong mailbox: ${message.mailboxEmail}`);
       }
-      archiveEmail(db, message);
+      archiveEmail(db, owner, message);
       importedCount += 1;
     }
     pageToken = page.nextPageToken;

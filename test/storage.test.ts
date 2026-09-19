@@ -18,6 +18,9 @@ let db: Database;
 
 beforeEach(async () => {
   db = await openDatabase({ path: ":memory:" });
+  const now = new Date().toISOString();
+  db.query("INSERT INTO users(id, display_name, spectrum_sender_id, status, created_at, updated_at) VALUES ('user-1', 'Owner', '+12025550999', 'active', ?, ?)").run(now, now);
+  db.query("INSERT INTO mailboxes(id, user_id, email, source, status, consent_confirmed_at, created_at, updated_at) VALUES ('mailbox-1', 'user-1', 'owner@example.com', 'mock', 'active', ?, ?, ?)").run(now, now, now);
 });
 
 afterEach(() => db.close(false));
@@ -35,41 +38,48 @@ describe("email archive and FTS", () => {
       subject: "Quiet dinner plans",
       normalizedBody: "Would Friday dinner somewhere quiet work for you?",
     };
-    archiveEmail(db, input);
-    archiveEmail(db, { ...input, normalizedBody: "Would Saturday dinner somewhere quiet work instead?" });
+    const owner = { userId: "user-1", mailboxId: "mailbox-1" };
+    archiveEmail(db, owner, input);
+    archiveEmail(db, owner, { ...input, normalizedBody: "Would Saturday dinner somewhere quiet work instead?" });
 
     expect((db.query("SELECT count(*) AS n FROM email_messages").get() as { n: number }).n).toBe(1);
-    expect(searchEmail(db, "Maya dinner")).toHaveLength(1);
-    expect(searchEmail(db, "Saturday")[0]?.subject).toBe("Quiet dinner plans");
-    expect(searchEmailHybrid(db, "Saturday")[0]?.retrieval).toBe("keyword");
-    expect(getThread(db, "thread-1")[0]?.body).toContain("Saturday");
+    expect(searchEmail(db, "user-1", "Maya dinner")).toHaveLength(1);
+    expect(searchEmail(db, "user-1", "Saturday")[0]?.subject).toBe("Quiet dinner plans");
+    expect(searchEmailHybrid(db, "user-1", "Saturday")[0]?.retrieval).toBe("keyword");
+    expect(getThread(db, "user-1", "thread-1")[0]?.body).toContain("Saturday");
     expect(rebuildEmailFts(db)).toBe(1);
   });
 });
 
 describe("durable memory lifecycle", () => {
   test("remembers, corrects, forgets, and suppresses unchanged extraction", () => {
+    archiveEmail(db, { userId: "user-1", mailboxId: "mailbox-1" }, {
+      providerMessageId: "gmail-1", providerThreadId: "thread-1", mailboxEmail: "owner@example.com",
+      internalDateMs: Date.parse("2026-09-01T10:00:00Z"), sender: "Owner <owner@example.com>",
+      recipients: ["Friend <friend@example.com>"], subject: "Dinner", normalizedBody: "I prefer quiet restaurants.",
+    });
     const evidence = [{ type: "email" as const, id: "gmail-1" }];
-    const first = createMemory(db, {
+    const first = createMemory(db, "user-1", {
       kind: "preference",
       claim: "Prefers quiet restaurants",
       evidence,
       origin: "email-extracted",
     }).memory!;
-    expect(searchMemories(db, "quiet restaurants")[0]?.id).toBe(first.id);
+    expect(searchMemories(db, "user-1", "quiet restaurants")[0]?.id).toBe(first.id);
 
-    const corrected = correctMemory(db, first.id, {
+    recordChatMessage(db, { userId: "user-1", providerMessageId: "chat-2", conversationId: "chat-1", senderId: "+12025550999", direction: "inbound", content: "Actually, lively restaurants", processingStatus: "processed" });
+    const corrected = correctMemory(db, "user-1", first.id, {
       kind: "preference",
       claim: "Prefers lively restaurants",
       evidence: [{ type: "chat", id: "chat-2" }],
     });
-    expect(searchMemories(db, "quiet restaurants").some((memory) => memory.id === first.id)).toBe(false);
-    expect(searchMemories(db, "lively restaurants")[0]?.id).toBe(corrected.id);
+    expect(searchMemories(db, "user-1", "quiet restaurants").some((memory) => memory.id === first.id)).toBe(false);
+    expect(searchMemories(db, "user-1", "lively restaurants")[0]?.id).toBe(corrected.id);
 
-    expect(forgetMemory(db, corrected.id)).toBe(true);
-    expect(searchMemories(db, "lively restaurants")).toHaveLength(0);
+    expect(forgetMemory(db, "user-1", corrected.id)).toBe(true);
+    expect(searchMemories(db, "user-1", "lively restaurants")).toHaveLength(0);
 
-    const extracted = createMemory(db, {
+    const extracted = createMemory(db, "user-1", {
       kind: "preference",
       claim: "Prefers lively restaurants",
       evidence: [{ type: "chat", id: "chat-2" }],
@@ -79,7 +89,7 @@ describe("durable memory lifecycle", () => {
   });
 
   test("rejects credential-like claims extracted from email", () => {
-    expect(() => createMemory(db, {
+    expect(() => createMemory(db, "user-1", {
       kind: "episode",
       claim: "The verification code is 123456",
       origin: "email-extracted",
@@ -91,6 +101,7 @@ describe("durable memory lifecycle", () => {
 describe("chat history", () => {
   test("deduplicates provider events and survives database use", () => {
     const message = {
+      userId: "user-1",
       providerMessageId: "imessage-1",
       conversationId: "chat-1",
       senderId: "+14155550123",
@@ -100,7 +111,7 @@ describe("chat history", () => {
     };
     expect(recordChatMessage(db, message)).toBe(true);
     expect(recordChatMessage(db, message)).toBe(false);
-    expect(recentChatHistory(db, "chat-1")).toEqual([
+    expect(recentChatHistory(db, "user-1", "chat-1")).toEqual([
       expect.objectContaining({ direction: "inbound", content: "Remember this" }),
     ]);
   });
@@ -110,7 +121,10 @@ describe("chat history", () => {
     const path = join(directory, "history.sqlite");
     try {
       const first = await openDatabase({ path });
+      const now = new Date().toISOString();
+      first.query("INSERT INTO users(id, display_name, spectrum_sender_id, status, created_at, updated_at) VALUES ('user-1', 'Owner', '+12025550999', 'active', ?, ?)").run(now, now);
       recordChatMessage(first, {
+        userId: "user-1",
         providerMessageId: "persisted-1",
         conversationId: "chat-persisted",
         senderId: "+14155550123",
@@ -121,7 +135,7 @@ describe("chat history", () => {
       first.close(false);
 
       const reopened = await openDatabase({ path });
-      expect(recentChatHistory(reopened, "chat-persisted")[0]?.content).toBe("Still here");
+      expect(recentChatHistory(reopened, "user-1", "chat-persisted")[0]?.content).toBe("Still here");
       reopened.close(false);
     } finally {
       await rm(directory, { recursive: true, force: true });

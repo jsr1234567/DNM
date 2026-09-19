@@ -10,10 +10,17 @@ const confirmedMailbox = argument("confirm-mailbox");
 if (!confirmedMailbox) {
   throw new Error("Pass --confirm-mailbox=you@example.com to confirm this consenting mailbox");
 }
+const userId = argument("user-id");
+const mailboxId = argument("mailbox-id");
+if (!userId || !mailboxId) {
+  throw new Error("Pass --user-id=<local-user-id> and --mailbox-id=<owned-gmail-mailbox-id>");
+}
 
 const db = await openDatabase();
 try {
   const result = await importRecentGmail(db, {
+    userId,
+    mailboxId,
     confirmedMailbox,
     days: Number(argument("days") ?? 30),
     limit: Number(argument("limit") ?? 500),

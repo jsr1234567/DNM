@@ -25,6 +25,9 @@ describe("single-turn iMessage response context", () => {
 
   beforeEach(async () => {
     db = await openDatabase({ path: ":memory:" });
+    const now = new Date().toISOString();
+    db.query("INSERT INTO users(id, display_name, spectrum_sender_id, status, created_at, updated_at) VALUES ('user-1', 'Owner', '+12025550999', 'active', ?, ?)").run(now, now);
+    db.query("INSERT INTO mailboxes(id, user_id, email, source, status, consent_confirmed_at, created_at, updated_at) VALUES ('mailbox-1', 'user-1', 'owner@example.com', 'mock', 'active', ?, ?, ?)").run(now, now, now);
   });
 
   afterEach(() => db.close(false));
@@ -32,6 +35,7 @@ describe("single-turn iMessage response context", () => {
   test("uses the latest three user messages, active memories, and latest three emails", async () => {
     for (let index = 1; index <= 4; index += 1) {
       recordChatMessage(db, {
+        userId: "user-1",
         providerMessageId: `chat-${index}`,
         conversationId: "conversation-1",
         senderId: "user-1",
@@ -42,14 +46,14 @@ describe("single-turn iMessage response context", () => {
       });
     }
 
-    createMemory(db, {
+    createMemory(db, "user-1", {
       kind: "preference",
       claim: "The user prefers quiet restaurants",
       origin: "user-stated",
     });
 
     for (let index = 1; index <= 4; index += 1) {
-      archiveEmail(db, {
+      archiveEmail(db, { userId: "user-1", mailboxId: "mailbox-1" }, {
         providerMessageId: `email-${index}`,
         providerThreadId: `thread-${index}`,
         mailboxEmail: "owner@example.com",
@@ -61,7 +65,10 @@ describe("single-turn iMessage response context", () => {
       });
     }
 
-    const context = loadSessionContext(db, "conversation-1");
+    const context = loadSessionContext(db, "user-1", "conversation-1");
+    expect(context.profile).toEqual(expect.objectContaining({
+      name: "Owner", email: "owner@example.com",
+    }));
     expect(context.userMessages.map((message) => message.content)).toEqual([
       "user message 2",
       "user message 3",
@@ -77,7 +84,7 @@ describe("single-turn iMessage response context", () => {
     ]);
 
     const client = new FakeCompletionClient();
-    await expect(generateSessionReply(db, client, "conversation-1")).resolves.toBe(
+    await expect(generateSessionReply(db, client, "user-1", "conversation-1")).resolves.toBe(
       "Dinner is planned for Friday.",
     );
     expect(client.request?.prompt).toContain("user message 4");

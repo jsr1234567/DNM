@@ -27,6 +27,20 @@ function configure(db: Database): void {
 }
 
 export function migrate(db: Database): void {
+  const hasMigrations = db.query(
+    "SELECT 1 AS present FROM sqlite_master WHERE type = 'table' AND name = 'schema_migrations'",
+  ).get();
+  if (hasMigrations) {
+    const existing = db.query("SELECT max(version) AS version FROM schema_migrations").get() as {
+      version: number | null;
+    };
+    if (existing.version && existing.version < SCHEMA_VERSION) {
+      throw new Error(
+        `Local database schema ${existing.version} is incompatible with ${SCHEMA_VERSION}. ` +
+        "Stop the app and run bun run db:reset -- --yes, then reseed.",
+      );
+    }
+  }
   const migrateTransaction = db.transaction(() => {
     db.exec(schemaSql);
     db.query(

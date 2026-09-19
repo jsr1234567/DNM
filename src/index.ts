@@ -7,6 +7,12 @@ import {
   updateProcessingStatus,
 } from "./chat/history.ts";
 import { openDatabase } from "./db/index.ts";
+import { resolveInboundUser, getUser } from "./users/index.ts";
+import { handleBountyCommand } from "./bounties/commands.ts";
+import { extractBountyDrafts } from "./bounties/extract.ts";
+import { runBountyMatching } from "./bounties/match.ts";
+import { draftPrompt } from "./bounties/present.ts";
+import { loadDemoProfile } from "./demo/profile.ts";
 
 const projectId = process.env.PROJECT_ID ?? "";
 
@@ -29,6 +35,10 @@ const app = await Spectrum({
 });
 const db = await openDatabase();
 const llm = new OpenRouterClient();
+const demoProfile = await loadDemoProfile(db);
+if (demoProfile) {
+  console.log(`Bound stage sender to fixture persona ${demoProfile.userId}.`);
+}
 
 const publicDir = new URL("../public/", import.meta.url);
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
@@ -172,7 +182,7 @@ async function registerUser(request: Request) {
     return json({
       success: true,
       assignedPhoneNumber: user.assignedPhoneNumber,
-      message: "You're connected to DNM.",
+      message: "You're registered with Photon. A demo operator must explicitly approve your local DNM access.",
     });
   } catch {
     return json(
@@ -219,27 +229,72 @@ const server = Bun.serve({
 
 console.log(`DNM signup is ready at http://localhost:${server.port}`);
 
+async function deliverPrivateMessage(userId: string, content: string): Promise<void> {
+  const user = getUser(db, userId);
+  if (!user || user.status !== "active") throw new Error("Active recipient not found");
+  const platform = imessage(app);
+  const recipient = await platform.user(user.spectrumSenderId);
+  const directMessage = await platform.space.create(recipient);
+  await directMessage.send(content);
+}
+
+let matching = false;
+async function matchAndDeliver(): Promise<void> {
+  if (matching) return;
+  matching = true;
+  try {
+    const result = await runBountyMatching(db, llm, {
+      askHelper: ({ helperUserId, text }) => deliverPrivateMessage(helperUserId, text),
+    });
+    console.log(`Bounty match run: open=${result.openBountiesScanned} scored=${result.helperPairsScored} asked=${result.asksSucceeded} failed=${result.asksFailed}`);
+  } catch (error) {
+    console.error("Bounty matching failed.", error instanceof Error ? error.message : error);
+  } finally { matching = false; }
+}
+
 async function runMessageLoop() {
   for await (const [space, message] of app.messages) {
     if (message.direction !== "inbound" || message.content.type !== "text") continue;
     if (!imessage.is(message) || imessage(space).type !== "dm") continue;
 
+    const senderId = message.sender?.id;
+    const inboundText = message.content.text;
+    const user = resolveInboundUser(db, {
+      direction: message.direction, contentType: message.content.type, platform: message.platform,
+      spaceType: imessage(space).type, senderId,
+    });
+    if (!user) {
+      await space.send("This private demo is limited to explicitly allowlisted users.").catch(() => undefined);
+      continue;
+    }
+
     const inserted = recordChatMessage(db, {
+      userId: user.id,
       providerMessageId: message.id,
       conversationId: space.id,
-      senderId: message.sender?.id ?? "unknown",
+      senderId: senderId!,
       direction: "inbound",
-      content: message.content.text,
+      content: inboundText,
       occurredAt: message.timestamp.toISOString(),
     });
     if (!inserted) continue;
 
-    updateProcessingStatus(db, message.id, "processing");
+    updateProcessingStatus(db, user.id, message.id, "processing");
     try {
       await space.responding(async () => {
-        const reply = await generateSessionReply(db, llm, space.id);
+        const command = await handleBountyCommand(
+          db, user.id, inboundText, deliverPrivateMessage,
+        );
+        let reply = command.reply;
+        if (!command.handled) {
+          reply = await generateSessionReply(db, llm, user.id, space.id);
+          const extraction = await extractBountyDrafts(db, llm, user.id);
+          if (extraction.created[0]) reply += `\n\n${draftPrompt(extraction.created[0])}`;
+        }
+        if (!reply) throw new Error("No reply was produced");
         const outbound = await space.send(reply);
         recordChatMessage(db, {
+          userId: user.id,
           providerMessageId: outbound?.id ?? `reply:${message.id}`,
           conversationId: space.id,
           senderId: outbound?.sender?.id ?? "dnm",
@@ -249,10 +304,12 @@ async function runMessageLoop() {
           processingStatus: "processed",
         });
       });
-      updateProcessingStatus(db, message.id, "processed");
+      updateProcessingStatus(db, user.id, message.id, "processed");
+      if (/^post(?:\s+\d+)?$/i.test(inboundText.trim())) void matchAndDeliver();
     } catch (error) {
       updateProcessingStatus(
         db,
+        user.id,
         message.id,
         "failed",
         error instanceof Error ? error.name : "UnknownError",
@@ -270,3 +327,9 @@ async function runMessageLoop() {
 runMessageLoop().catch((error) => {
   console.error("The iMessage listener stopped.", error);
 });
+
+const matchIntervalMs = Number.parseInt(process.env.DNM_BOUNTY_INTERVAL_MS ?? "0", 10);
+if (Number.isFinite(matchIntervalMs) && matchIntervalMs >= 60_000) {
+  setInterval(() => void matchAndDeliver(), matchIntervalMs);
+  void matchAndDeliver();
+}

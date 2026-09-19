@@ -65,26 +65,26 @@ interface ExtractionOutput {
   }>;
 }
 
-function recentThreadIds(db: Database, mailbox: string, limit: number): string[] {
+function recentThreadIds(db: Database, userId: string, mailboxId: string, limit: number): string[] {
   const rows = db.query(`
     SELECT provider_thread_id
     FROM email_messages
-    WHERE lower(mailbox_email) = lower(?)
+    WHERE user_id = ? AND mailbox_id = ?
     GROUP BY provider_thread_id
     ORDER BY max(internal_date_ms) DESC
     LIMIT ?
-  `).all(mailbox, Math.max(1, Math.min(100, Math.trunc(limit)))) as Array<{ provider_thread_id: string }>;
+  `).all(userId, mailboxId, Math.max(1, Math.min(100, Math.trunc(limit)))) as Array<{ provider_thread_id: string }>;
   return rows.map((row) => row.provider_thread_id);
 }
 
-function loadThread(db: Database, mailbox: string, threadId: string): ThreadMessage[] {
+function loadThread(db: Database, userId: string, mailbox: string, threadId: string): ThreadMessage[] {
   const rows = db.query(`
     SELECT provider_message_id, sender, recipients_json, subject, sent_at,
       internal_date_ms, normalized_body
     FROM email_messages
-    WHERE lower(mailbox_email) = lower(?) AND provider_thread_id = ?
+    WHERE user_id = ? AND lower(mailbox_email) = lower(?) AND provider_thread_id = ?
     ORDER BY internal_date_ms
-  `).all(mailbox, threadId) as Array<{
+  `).all(userId, mailbox, threadId) as Array<{
     provider_message_id: string;
     sender: string;
     recipients_json: string;
@@ -119,22 +119,22 @@ export interface ExtractMemoriesResult {
 export async function extractMemoriesFromEmail(
   db: Database,
   client: StructuredCompletionClient,
-  options: { mailbox: string; threadLimit?: number },
+  options: { userId: string; mailboxId: string; mailbox: string; threadLimit?: number },
 ): Promise<ExtractMemoriesResult> {
-  const threadIds = recentThreadIds(db, options.mailbox, options.threadLimit ?? 25);
+  const threadIds = recentThreadIds(db, options.userId, options.mailboxId, options.threadLimit ?? 25);
   const created: MemoryRecord[] = [];
   let skipped = 0;
 
   for (let offset = 0; offset < threadIds.length; offset += 5) {
     const batchIds = threadIds.slice(offset, offset + 5);
-    const messages = batchIds.flatMap((threadId) => loadThread(db, options.mailbox, threadId));
+    const messages = batchIds.flatMap((threadId) => loadThread(db, options.userId, options.mailbox, threadId));
     if (messages.length === 0) continue;
     const output = await client.complete<ExtractionOutput>({
       name: "email_memory_candidates",
       schema: extractionSchema,
       system: extractionSystem,
       prompt: `<mailbox_owner>${options.mailbox}</mailbox_owner>\n<email_threads>${JSON.stringify(messages)}</email_threads>`,
-      maxTokens: 2_500,
+      maxTokens: 1_800,
     });
     const ids = new Map(messages.map((message) => [message.providerMessageId, message]));
 
@@ -153,7 +153,7 @@ export async function extractMemoriesFromEmail(
         continue;
       }
       try {
-        const result = createMemory(db, {
+        const result = createMemory(db, options.userId, {
           kind: candidate.kind,
           claim: candidate.claim,
           evidence: evidenceIds.map((id) => ({ type: "email", id })),

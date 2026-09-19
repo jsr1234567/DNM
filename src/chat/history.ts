@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite";
 
 export interface ChatMessageInput {
+  userId: string;
   providerMessageId: string;
   conversationId: string;
   senderId: string;
@@ -13,10 +14,11 @@ export interface ChatMessageInput {
 export function recordChatMessage(db: Database, message: ChatMessageInput): boolean {
   const result = db.query(`
     INSERT OR IGNORE INTO chat_messages(
-      provider_message_id, conversation_id, sender_id, direction, content,
+      user_id, provider_message_id, conversation_id, sender_id, direction, content,
       occurred_at, processing_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
+    message.userId,
     message.providerMessageId,
     message.conversationId,
     message.senderId,
@@ -30,17 +32,18 @@ export function recordChatMessage(db: Database, message: ChatMessageInput): bool
 
 export function updateProcessingStatus(
   db: Database,
+  userId: string,
   providerMessageId: string,
   status: "processing" | "processed" | "failed",
   errorCode?: string,
 ): void {
   db.query(`
     UPDATE chat_messages SET processing_status = ?, error_code = ?
-    WHERE provider_message_id = ?
-  `).run(status, errorCode ?? null, providerMessageId);
+    WHERE user_id = ? AND provider_message_id = ?
+  `).run(status, errorCode ?? null, userId, providerMessageId);
 }
 
-export function recentChatHistory(db: Database, conversationId: string, limit = 20): Array<{
+export function recentChatHistory(db: Database, userId: string, conversationId: string, limit = 20): Array<{
   direction: "inbound" | "outbound";
   content: string;
   occurredAt: string;
@@ -49,11 +52,11 @@ export function recentChatHistory(db: Database, conversationId: string, limit = 
     SELECT direction, content, occurred_at FROM (
       SELECT id, direction, content, occurred_at
       FROM chat_messages
-      WHERE conversation_id = ? AND processing_status IN ('processed', 'processing')
+      WHERE user_id = ? AND conversation_id = ? AND processing_status IN ('processed', 'processing')
       ORDER BY occurred_at DESC, id DESC
       LIMIT ?
     ) ORDER BY occurred_at, id
-  `).all(conversationId, Math.max(1, Math.min(100, Math.trunc(limit)))) as Array<{
+  `).all(userId, conversationId, Math.max(1, Math.min(100, Math.trunc(limit)))) as Array<{
     direction: "inbound" | "outbound";
     content: string;
     occurred_at: string;
@@ -67,6 +70,7 @@ export function recentChatHistory(db: Database, conversationId: string, limit = 
 
 export function recentUserMessages(
   db: Database,
+  userId: string,
   conversationId: string,
   limit = 3,
 ): Array<{ content: string; occurredAt: string }> {
@@ -74,13 +78,13 @@ export function recentUserMessages(
     SELECT content, occurred_at FROM (
       SELECT id, content, occurred_at
       FROM chat_messages
-      WHERE conversation_id = ?
+      WHERE user_id = ? AND conversation_id = ?
         AND direction = 'inbound'
         AND processing_status IN ('processed', 'processing')
       ORDER BY occurred_at DESC, id DESC
       LIMIT ?
     ) ORDER BY occurred_at, id
-  `).all(conversationId, Math.max(1, Math.min(20, Math.trunc(limit)))) as Array<{
+  `).all(userId, conversationId, Math.max(1, Math.min(20, Math.trunc(limit)))) as Array<{
     content: string;
     occurred_at: string;
   }>;

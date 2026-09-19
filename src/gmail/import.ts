@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { archiveEmail } from "../email/archive.ts";
-import { setSetting } from "../db/settings.ts";
+import { setUserSetting } from "../db/settings.ts";
 import { gmailAccess, gmailJson } from "./client.ts";
 
 interface GmailListResponse {
@@ -31,6 +31,8 @@ interface GmailProfile {
 }
 
 export interface GmailImportOptions {
+  userId: string;
+  mailboxId: string;
   confirmedMailbox: string;
   days?: number;
   limit?: number;
@@ -113,17 +115,26 @@ export async function importRecentGmail(db: Database, options: GmailImportOption
   const batchSize = Math.max(1, Math.min(20, Math.trunc(options.batchSize ?? 10)));
   const startedAt = new Date().toISOString();
   const query = `newer_than:${days}d -in:spam -in:trash`;
-  const { token } = await gmailAccess();
+  const { token } = await gmailAccess(options.userId);
   const profile = await gmailJson<GmailProfile>("/profile", token);
   const mailboxEmail = profile.emailAddress.toLowerCase();
   if (options.confirmedMailbox.trim().toLowerCase() !== mailboxEmail) {
     throw new Error(`Connected mailbox does not match --confirm-mailbox (${mailboxEmail})`);
   }
+  const ownedMailbox = db.query(`
+    SELECT email, source, status FROM mailboxes WHERE id = ? AND user_id = ?
+  `).get(options.mailboxId, options.userId) as {
+    email: string; source: string; status: string;
+  } | null;
+  if (!ownedMailbox || ownedMailbox.status !== "active" || ownedMailbox.source !== "gmail" ||
+      ownedMailbox.email.toLowerCase() !== mailboxEmail) {
+    throw new Error("Confirmed Gmail mailbox is not an active, consented mailbox for this user");
+  }
 
   const run = db.query(`
-    INSERT INTO import_runs(mailbox_email, status, query, requested_limit, started_at)
-    VALUES (?, 'running', ?, ?, ?)
-  `).run(mailboxEmail, query, limit, startedAt);
+    INSERT INTO import_runs(user_id, mailbox_id, mailbox_email, status, query, requested_limit, started_at)
+    VALUES (?, ?, ?, 'running', ?, ?, ?)
+  `).run(options.userId, options.mailboxId, mailboxEmail, query, limit, startedAt);
   const runId = Number(run.lastInsertRowid);
   let importedCount = 0;
 
@@ -150,7 +161,7 @@ export async function importRecentGmail(db: Database, options: GmailImportOption
       ));
       for (const message of messages) {
         const body = normalizeEmailBody(message);
-        archiveEmail(db, {
+        archiveEmail(db, { userId: options.userId, mailboxId: options.mailboxId }, {
           providerMessageId: message.id,
           providerThreadId: message.threadId,
           mailboxEmail,
@@ -175,8 +186,7 @@ export async function importRecentGmail(db: Database, options: GmailImportOption
     db.query(`
       UPDATE import_runs SET status = 'complete', imported_count = ?, completed_at = ? WHERE id = ?
     `).run(importedCount, completedAt, runId);
-    setSetting(db, "demo_owner", { mailboxEmail, confirmedAt: startedAt });
-    setSetting(db, "gmail_snapshot", {
+    setUserSetting(db, options.userId, "gmail_snapshot", {
       mailboxEmail, query, importedCount, startedAt, completedAt, complete: true,
     });
     return { mailboxEmail, importedCount, startedAt, completedAt, query };
@@ -185,7 +195,7 @@ export async function importRecentGmail(db: Database, options: GmailImportOption
     db.query(`
       UPDATE import_runs SET status = ?, imported_count = ?, completed_at = ?, error_code = ? WHERE id = ?
     `).run(importedCount > 0 ? "partial" : "failed", importedCount, completedAt, errorCode(error), runId);
-    setSetting(db, "gmail_snapshot", {
+    setUserSetting(db, options.userId, "gmail_snapshot", {
       mailboxEmail, query, importedCount, startedAt, completedAt, complete: false,
     });
     throw error;
