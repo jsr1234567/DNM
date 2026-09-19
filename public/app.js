@@ -45,7 +45,7 @@ function setLoading(isLoading) {
   submitButton.disabled = isLoading;
   submitButton.setAttribute("aria-busy", String(isLoading));
   submitButton.classList.toggle("is-loading", isLoading);
-  buttonLabel.textContent = isLoading ? "Connecting…" : "Connect my iMessage";
+  buttonLabel.textContent = isLoading ? "Connecting…" : "Connect";
 }
 
 function focusFirstError(errors) {

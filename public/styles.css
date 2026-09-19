@@ -75,18 +75,12 @@ a {
 }
 
 .shell {
-  width: min(1120px, calc(100% - 32px));
+  width: min(520px, calc(100% - 32px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 48px 0;
+  padding: 32px 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
-  align-items: center;
-  gap: 72px;
-}
-
-.intro {
-  max-width: 590px;
+  place-items: center;
 }
 
 .wordmark {
@@ -94,7 +88,7 @@ a {
   min-height: 44px;
   align-items: center;
   gap: 10px;
-  margin-bottom: 68px;
+  margin-bottom: 32px;
   font-weight: 750;
   letter-spacing: -0.02em;
   text-decoration: none;
@@ -111,15 +105,6 @@ a {
   border-radius: 10px;
 }
 
-.eyebrow,
-.kicker {
-  color: var(--primary);
-  font-size: 0.78rem;
-  font-weight: 750;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-}
-
 h1,
 h2,
 p {
@@ -127,11 +112,10 @@ p {
 }
 
 h1 {
-  max-width: 11ch;
-  margin-bottom: 24px;
-  font-size: clamp(2.8rem, 7vw, 5.4rem);
-  line-height: 0.96;
-  letter-spacing: -0.065em;
+  margin-bottom: 8px;
+  font-size: clamp(2rem, 8vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
 }
 
 h2 {
@@ -141,70 +125,16 @@ h2 {
   letter-spacing: -0.04em;
 }
 
-.lede {
-  max-width: 56ch;
-  margin-bottom: 44px;
-  color: var(--muted);
-  font-size: 1.08rem;
-  line-height: 1.65;
-}
-
-.steps {
-  display: grid;
-  gap: 18px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.steps li {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.steps strong,
-.steps small {
-  display: block;
-}
-
-.steps strong {
-  margin-bottom: 3px;
-  font-size: 0.96rem;
-}
-
-.steps small {
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.4;
-}
-
-.step-number {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  place-items: center;
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
-  border-radius: 50%;
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
 .card {
+  width: 100%;
   padding: 38px;
   background: var(--surface);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow);
 }
 
-.kicker {
-  margin-bottom: 12px;
-}
-
 .form-intro {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   color: var(--muted);
   font-size: 0.92rem;
   line-height: 1.5;
@@ -358,14 +288,6 @@ form {
   }
 }
 
-.privacy-note {
-  margin: 18px 0 0;
-  color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.5;
-  text-align: center;
-}
-
 .notice {
   margin-bottom: 20px;
   padding: 14px;
@@ -387,7 +309,7 @@ form {
 .success-view {
   display: grid;
   justify-items: start;
-  min-height: 480px;
+  min-height: 420px;
   align-content: center;
 }
 
@@ -409,7 +331,7 @@ form {
   font-weight: 850;
 }
 
-.success-view > p:not(.kicker) {
+.success-view > p {
   margin-bottom: 22px;
   color: var(--muted);
   line-height: 1.6;
@@ -443,51 +365,10 @@ form {
   background: color-mix(in srgb, var(--surface-subtle) 80%, var(--foreground));
 }
 
-@media (max-width: 860px) {
-  .shell {
-    grid-template-columns: 1fr;
-    gap: 48px;
-    padding: 32px 0 56px;
-  }
-
-  .intro {
-    max-width: 680px;
-  }
-
-  .wordmark {
-    margin-bottom: 48px;
-  }
-
-  h1 {
-    max-width: 13ch;
-  }
-
-  .card {
-    width: min(100%, 620px);
-  }
-}
-
 @media (max-width: 520px) {
   .shell {
     width: min(100% - 24px, 480px);
     padding-top: 20px;
-    gap: 36px;
-  }
-
-  .wordmark {
-    margin-bottom: 36px;
-  }
-
-  h1 {
-    font-size: clamp(2.65rem, 14vw, 4.2rem);
-  }
-
-  .lede {
-    margin-bottom: 32px;
-  }
-
-  .steps {
-    gap: 14px;
   }
 
   .card {
