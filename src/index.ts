@@ -1,5 +1,12 @@
 import { Spectrum } from "spectrum-ts";
 import { imessage } from "@spectrum-ts/imessage";
+import { OpenRouterClient } from "./ai/openrouter.ts";
+import { generateSessionReply } from "./agent/respond.ts";
+import {
+  recordChatMessage,
+  updateProcessingStatus,
+} from "./chat/history.ts";
+import { openDatabase } from "./db/index.ts";
 
 const projectId = process.env.PROJECT_ID ?? "";
 
@@ -20,6 +27,8 @@ const app = await Spectrum({
     imessage.config(),
   ],
 });
+const db = await openDatabase();
+const llm = new OpenRouterClient();
 
 const publicDir = new URL("../public/", import.meta.url);
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
@@ -211,11 +220,49 @@ const server = Bun.serve({
 console.log(`DNM signup is ready at http://localhost:${server.port}`);
 
 async function runMessageLoop() {
-  // `app.messages` is an async iterable. Each tick yields a `space` (the
-  // conversation) and an inbound `message`. Reply by awaiting `space.send(...)`.
   for await (const [space, message] of app.messages) {
-    if (message.content.type === "text") {
-      await space.send(`echo: ${message.content.text}`);
+    if (message.direction !== "inbound" || message.content.type !== "text") continue;
+    if (!imessage.is(message) || imessage(space).type !== "dm") continue;
+
+    const inserted = recordChatMessage(db, {
+      providerMessageId: message.id,
+      conversationId: space.id,
+      senderId: message.sender?.id ?? "unknown",
+      direction: "inbound",
+      content: message.content.text,
+      occurredAt: message.timestamp.toISOString(),
+    });
+    if (!inserted) continue;
+
+    updateProcessingStatus(db, message.id, "processing");
+    try {
+      await space.responding(async () => {
+        const reply = await generateSessionReply(db, llm, space.id);
+        const outbound = await space.send(reply);
+        recordChatMessage(db, {
+          providerMessageId: outbound?.id ?? `reply:${message.id}`,
+          conversationId: space.id,
+          senderId: outbound?.sender?.id ?? "dnm",
+          direction: "outbound",
+          content: reply,
+          occurredAt: outbound?.timestamp.toISOString(),
+          processingStatus: "processed",
+        });
+      });
+      updateProcessingStatus(db, message.id, "processed");
+    } catch (error) {
+      updateProcessingStatus(
+        db,
+        message.id,
+        "failed",
+        error instanceof Error ? error.name : "UnknownError",
+      );
+      console.error("Could not answer an iMessage.", error);
+      try {
+        await space.send("Sorry, I couldn't answer that right now. Please try again.");
+      } catch (sendError) {
+        console.error("Could not send the iMessage error response.", sendError);
+      }
     }
   }
 }

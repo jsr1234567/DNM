@@ -64,3 +64,29 @@ export function recentChatHistory(db: Database, conversationId: string, limit = 
     occurredAt: row.occurred_at,
   }));
 }
+
+export function recentUserMessages(
+  db: Database,
+  conversationId: string,
+  limit = 3,
+): Array<{ content: string; occurredAt: string }> {
+  const rows = db.query(`
+    SELECT content, occurred_at FROM (
+      SELECT id, content, occurred_at
+      FROM chat_messages
+      WHERE conversation_id = ?
+        AND direction = 'inbound'
+        AND processing_status IN ('processed', 'processing')
+      ORDER BY occurred_at DESC, id DESC
+      LIMIT ?
+    ) ORDER BY occurred_at, id
+  `).all(conversationId, Math.max(1, Math.min(20, Math.trunc(limit)))) as Array<{
+    content: string;
+    occurred_at: string;
+  }>;
+
+  return rows.map((row) => ({
+    content: row.content,
+    occurredAt: row.occurred_at,
+  }));
+}

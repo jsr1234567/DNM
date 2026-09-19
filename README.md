@@ -10,6 +10,10 @@ From your project Settings on the [Photon dashboard](https://app.photon.codes):
 
 - `PROJECT_ID`
 - `PROJECT_SECRET`
+- `OPENROUTER_API_KEY`
+
+The iMessage reply loop uses `google/gemini-3.8-flash` through OpenRouter by
+default. Set `OPENROUTER_MODEL` to override it for local experiments.
 
 ## Run
 
@@ -23,6 +27,10 @@ Open [http://localhost:3000](http://localhost:3000) to register an iMessage user
 The form sends contact details to the local server, which registers the user with
 the DNM Photon project and displays their assigned iMessage number. Photon project
 credentials remain server-side.
+
+Each inbound iMessage DM triggers one model call using the last three inbound
+messages in that conversation, the active memories in SQLite, and the three most
+recent archived emails. The loop does not run tools or modify memory.
 
 ## Local email archive and memory
 
@@ -82,8 +90,8 @@ bun run db:reset --yes
 Revoke the OAuth grant separately at
 [Google Account permissions](https://myaccount.google.com/permissions) if needed.
 SQLite is not encrypted; use a trusted machine with disk encryption. Email excerpts
-may later be sent to the selected model vendor, and iMessage replies travel through
-Spectrum—this local database does not make the system offline or end-to-end private.
+are sent to the selected model vendor when responding, and iMessage replies travel
+through Spectrum—this local database does not make the system offline or end-to-end private.
 
 ## Hackathon research
 
@@ -94,5 +102,5 @@ Research is limited to public, professionally relevant information and excludes 
 ## Where to go next
 
 - [Spectrum docs](https://photon.codes/docs/spectrum-ts)
-- Edit `src/index.ts` to replace the echo loop with real agent logic.
+- Add sender allowlisting and query-aware email retrieval before expanding beyond the demo user.
 - Add more providers from `spectrum-ts/providers/*`.
