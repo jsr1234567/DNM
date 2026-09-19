@@ -5,10 +5,17 @@
   "type": "module",
   "scripts": {
     "start": "bun src/index.ts",
-    "dev": "bun --watch src/index.ts"
+    "dev": "bun --watch src/index.ts",
+    "db:setup": "bun scripts/setup-db.ts",
+    "db:reindex": "bun scripts/rebuild-indexes.ts",
+    "db:reset": "bun scripts/reset-local-data.ts",
+    "gmail:import": "bun scripts/import-gmail.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "spectrum-ts": "^12.8.0"
+    "spectrum-ts": "^12.8.0",
+    "sqlite-vec": "0.1.8"
   },
   "devDependencies": {
     "typescript": "^5",

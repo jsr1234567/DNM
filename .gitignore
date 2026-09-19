@@ -5,6 +5,14 @@ client_secret*.json
 credential.json
 credentials.json
 .gmail-token.json
+.data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+mail-exports/
 dist
 *.log
 .DS_Store
