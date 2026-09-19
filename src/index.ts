@@ -174,6 +174,7 @@ async function registerUser(request: Request) {
 }
 
 const server = Bun.serve({
+  hostname: "127.0.0.1",
   port,
   async fetch(request) {
     const url = new URL(request.url);
