@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Register your phone to join DNM through iMessage."
+    />
+    <title>Join DNM on iMessage</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="intro" aria-labelledby="page-title">
+        <a class="wordmark" href="/" aria-label="DNM home">
+          <span class="wordmark-mark" aria-hidden="true">D</span>
+          <span>DNM</span>
+        </a>
+        <div class="eyebrow">Community help, one message away</div>
+        <h1 id="page-title">Join DNM on iMessage</h1>
+        <p class="lede">
+          Connect your number to discover practical community projects, offer your skills,
+          and help turn small requests into real outcomes.
+        </p>
+
+        <ol class="steps" aria-label="How joining works">
+          <li>
+            <span class="step-number">1</span>
+            <span><strong>Register</strong><small>Share your contact details securely.</small></span>
+          </li>
+          <li>
+            <span class="step-number">2</span>
+            <span><strong>Text DNM</strong><small>Photon gives you a number to message.</small></span>
+          </li>
+          <li>
+            <span class="step-number">3</span>
+            <span><strong>Start helping</strong><small>Find a useful project that fits your skills.</small></span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="card" aria-labelledby="form-title">
+        <div id="form-view">
+          <p class="kicker">Get connected</p>
+          <h2 id="form-title">Your iMessage details</h2>
+          <p class="form-intro">All fields are required. This takes about one minute.</p>
+
+          <div id="form-error" class="notice notice-error" role="alert" tabindex="-1" hidden>
+            <strong>We couldn’t register you.</strong>
+            <span id="form-error-message">Check your details and try again.</span>
+          </div>
+
+          <form id="registration-form" novalidate>
+            <div class="name-grid">
+              <div class="field">
+                <label for="first-name">First name</label>
+                <input
+                  id="first-name"
+                  name="firstName"
+                  type="text"
+                  autocomplete="given-name"
+                  maxlength="60"
+                  placeholder="Alex"
+                  required
+                />
+                <p class="field-error" id="first-name-error"></p>
+              </div>
+
+              <div class="field">
+                <label for="last-name">Last name</label>
+                <input
+                  id="last-name"
+                  name="lastName"
+                  type="text"
+                  autocomplete="family-name"
+                  maxlength="60"
+                  placeholder="Morgan"
+                  required
+                />
+                <p class="field-error" id="last-name-error"></p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                spellcheck="false"
+                maxlength="254"
+                placeholder="you@example.com"
+                required
+              />
+              <p class="field-error" id="email-error"></p>
+            </div>
+
+            <div class="field">
+              <label for="phone">iMessage phone number</label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                spellcheck="false"
+                placeholder="+14155551234"
+                aria-describedby="phone-hint phone-error"
+                required
+              />
+              <p class="hint" id="phone-hint">Include your country code and start with +.</p>
+              <p class="field-error" id="phone-error"></p>
+            </div>
+
+            <div class="consent-field">
+              <input id="consent" name="consent" type="checkbox" required />
+              <label for="consent">
+                I agree to receive DNM iMessages. My details will be sent to Photon to
+                connect this service.
+              </label>
+            </div>
+            <p class="field-error" id="consent-error"></p>
+
+            <button class="primary-button" id="submit-button" type="submit">
+              <span class="button-label">Connect my iMessage</span>
+              <span class="button-loader" aria-hidden="true"></span>
+            </button>
+          </form>
+
+          <p class="privacy-note">
+            DNM uses these details only to create your Photon messaging connection.
+          </p>
+        </div>
+
+        <div id="success-view" class="success-view" role="status" hidden>
+          <div class="success-mark" aria-hidden="true">✓</div>
+          <p class="kicker">You’re connected</p>
+          <h2>Send your first message</h2>
+          <p>Open Messages and text <strong>Hello</strong> to your assigned DNM number:</p>
+          <a id="message-link" class="phone-number" href="#"></a>
+          <a id="open-messages" class="primary-button link-button" href="#">
+            Open Messages
+          </a>
+          <button id="register-another" class="secondary-button" type="button">
+            Register another person
+          </button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

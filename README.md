@@ -15,8 +15,14 @@ From your project Settings on the [Photon dashboard](https://app.photon.codes):
 
 ```sh
 bun install
+photon whoami || photon login
 bun start
 ```
+
+Open [http://localhost:3000](http://localhost:3000) to register an iMessage user.
+The form sends contact details to the local server, which registers the user with
+the DNM Photon project and displays their assigned iMessage number. Photon project
+credentials remain server-side.
 
 ## Hackathon research
 
