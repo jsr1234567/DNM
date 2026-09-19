@@ -274,7 +274,7 @@ function HomeView({ setView, onOpenOnboarding, onOpenProject, claimedIds, onToas
   function handleSearch(event) {
     event.preventDefault()
     setView('community')
-    onToast(query ? `Showing community projects related to “${query}”.` : 'Showing all open community projects.')
+    onToast(query ? `Showing demo projects related to “${query}”.` : 'Showing all demo project examples.')
   }
 
   return (
@@ -299,7 +299,7 @@ function HomeView({ setView, onOpenOnboarding, onOpenProject, claimedIds, onToas
           </form>
           <div className="hero-proof" aria-label="Community activity">
             <div className="avatar-stack"><span>JM</span><span>AT</span><span>SR</span></div>
-            <p><strong>143 neighbors</strong> lent a hand this month</p>
+            <p><strong>Demo preview</strong> with illustrative community activity</p>
           </div>
         </div>
         <div className="hero-frog" aria-hidden="true">
@@ -328,8 +328,8 @@ function HomeView({ setView, onOpenOnboarding, onOpenProject, claimedIds, onToas
       <section className="projects-section">
         <div className="shell">
           <div className="section-heading">
-            <div><span className="eyebrow">Fresh from the pond</span><h2>Small projects, real neighbors</h2><p>Requester-approved summaries only. Private email text stays private.</p></div>
-            <div className="section-count">{filtered.length} open</div>
+            <div><span className="eyebrow">Demo project preview</span><h2>See how approved requests could look</h2><p>These cards are illustrative only. Real requests stay private until the requester approves a sanitized summary.</p></div>
+            <div className="section-count">{filtered.length} examples</div>
           </div>
           {filtered.length ? (
             <div className="project-grid">
@@ -419,7 +419,7 @@ function CommunityView({ onOpenProject, claimedIds }) {
   const filtered = projects.filter((p) => (skill === 'All projects' || p.category === skill) && (mode === 'Any format' || p.location.includes(mode)) && `${p.title} ${p.summary}`.toLowerCase().includes(query.toLowerCase()))
   return (
     <main className="dashboard-page">
-      <section className="dashboard-hero"><div className="shell"><span className="eyebrow">Community pond</span><h1>Find a small project<br />that feels like you.</h1><p>Matches come first, then the whole community. Every card uses a requester-approved summary.</p>
+      <section className="dashboard-hero"><div className="shell"><span className="eyebrow">Demo community pond</span><h1>Preview a small project<br />that feels like you.</h1><p>These example cards demonstrate the future helper experience; the private trusted-circle board is not published here.</p>
         <div className="feed-search"><Search size={21} /><label className="sr-only" htmlFor="feed-search">Search projects</label><input id="feed-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search projects" /><button onClick={() => setShowFilters(!showFilters)} aria-expanded={showFilters}><ListFilter size={18} /> Filters</button></div>
       </div></section>
       <section className="feed-section"><div className="shell feed-layout">
@@ -428,7 +428,7 @@ function CommunityView({ onOpenProject, claimedIds }) {
           <fieldset><legend>Format</legend>{['Any format','Remote','In person'].map((name) => <label key={name}><input type="radio" name="mode" checked={mode === name} onChange={() => setMode(name)} /><span>{name}</span></label>)}</fieldset>
           <div className="safety-callout"><ShieldCheck size={20} /><div><strong>Low-risk projects only</strong><p>No emergencies, medical care, childcare, or money transfers.</p></div></div>
         </aside>
-        <div className="feed-content"><div className="feed-heading"><div><span className="eyebrow">Picked for you</span><h2>Matching projects</h2></div><span>{filtered.length} open</span></div>
+        <div className="feed-content"><div className="feed-heading"><div><span className="eyebrow">Illustrative matches</span><h2>Example projects</h2></div><span>{filtered.length} examples</span></div>
           {filtered.length ? <div className="project-grid project-grid--feed">{filtered.map((project) => <ProjectCard key={project.id} project={project} onOpen={onOpenProject} claimed={claimedIds.includes(project.id)} />)}</div> : <div className="empty-state"><Search size={34} /><h3>No matching projects right now</h3><p>Try a broader skill or format. New requests ripple in throughout the day.</p><button className="button button--outline" onClick={() => {setSkill('All projects'); setMode('Any format'); setQuery('')}}>Clear filters</button></div>}
         </div>
       </div></section>
@@ -470,7 +470,7 @@ function ProjectModal({ project, onClose, onClaim, claimed }) {
     closeRef.current?.focus()
     return () => { document.removeEventListener('keydown', onKey); document.body.classList.remove('modal-open') }
   }, [onClose])
-  return <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}><section className="modal project-modal" role="dialog" aria-modal="true" aria-labelledby="project-title"><button ref={closeRef} className="close-button" onClick={onClose} aria-label="Close project details"><X /></button><ProjectArt tone={project.tone} /><div className="modal-content"><span className="match-pill"><Sparkles size={13} />{project.match}</span><h2 id="project-title">{project.title}</h2><p className="modal-summary">{project.summary}</p><div className="project-facts"><div><MapPin /><span>Format<strong>{project.location}</strong></span></div><div><Clock3 /><span>Expected effort<strong>{project.effort}</strong></span></div><div><UserRound /><span>Requested by<strong>{project.requester}</strong></span></div></div><div className="boundaries"><ShieldCheck /><div><strong>Clear, safe boundaries</strong><p>Only the approved summary is shown. Contact details unlock after both people confirm the match. No money transfers or sensitive care.</p></div></div><div className="modal-actions"><button className="button button--primary button--large" disabled={claimed} onClick={() => onClaim(project)}>{claimed ? <><Check size={18} /> Claimed by you</> : <>I can help <Heart size={18} /></>}</button><button className="button button--outline button--large" onClick={onClose}>Maybe later</button></div></div></section></div>
+  return <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}><section className="modal project-modal" role="dialog" aria-modal="true" aria-labelledby="project-title"><button ref={closeRef} className="close-button" onClick={onClose} aria-label="Close project details"><X /></button><ProjectArt tone={project.tone} /><div className="modal-content"><span className="match-pill"><Sparkles size={13} />Demo example</span><h2 id="project-title">{project.title}</h2><p className="modal-summary">{project.summary}</p><div className="project-facts"><div><MapPin /><span>Format<strong>{project.location}</strong></span></div><div><Clock3 /><span>Expected effort<strong>{project.effort}</strong></span></div><div><UserRound /><span>Example requester<strong>{project.requester}</strong></span></div></div><div className="boundaries"><ShieldCheck /><div><strong>Preview only</strong><p>This illustrative card is not connected to a real request. The live iMessage flow requires requester approval and mutual confirmation before contact details are exchanged.</p></div></div><div className="modal-actions"><button className="button button--primary button--large" disabled={claimed} onClick={() => onClaim(project)}>{claimed ? <><Check size={18} /> Added to demo</> : <>Try demo claim <Heart size={18} /></>}</button><button className="button button--outline button--large" onClick={onClose}>Maybe later</button></div></div></section></div>
 }
 
 function LocationCombobox({ value, onChange, error }) {
@@ -561,6 +561,8 @@ function OnboardingModal({ role, onClose, onFinish }) {
   const [identity, setIdentity] = useState('Nickname')
   const [community, setCommunity] = useState('')
   const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [availability, setAvailability] = useState('Mostly weekends')
   const isHelper = role === 'helper'
   const [phone, setPhone] = useState('')
   const [consent, setConsent] = useState(false)
@@ -592,6 +594,10 @@ function OnboardingModal({ role, onClose, onFinish }) {
   function toggleSkill(skill) { setSelected((current) => current.includes(skill) ? current.filter((item) => item !== skill) : [...current, skill]) }
 
   function connectGmail() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrors((current) => ({ ...current, email: 'Enter the Gmail address you want to connect.' }))
+      return
+    }
     setGmailBusy(true)
     setErrors((current) => ({ ...current, gmail: undefined }))
     window.setTimeout(() => {
@@ -601,7 +607,7 @@ function OnboardingModal({ role, onClose, onFinish }) {
   }
 
   async function startVerification() {
-    const nextErrors = validateIMessageIdentity({ name, phone })
+    const nextErrors = validateIMessageIdentity({ name, email, phone })
     if (!photonStatus.configured) nextErrors.integration = photonStatus.offline
       ? 'The Froggie API is not running. Start the full npm run dev command.'
       : 'Photon still needs its project ID and project secret.'
@@ -612,7 +618,9 @@ function OnboardingModal({ role, onClose, onFinish }) {
     setRequestBusy(true)
     setErrors({})
     try {
-      const session = await requestPhotonVerification({ name, phone, role })
+      const session = await requestPhotonVerification({
+        name, email, phone, role, consent, community, mode, availability, identity, skills: selected,
+      })
       setVerificationSession(session)
       setStep(4)
     } catch (error) {
@@ -630,7 +638,7 @@ function OnboardingModal({ role, onClose, onFinish }) {
     setVerifyBusy(true)
     try {
       const verification = await verifyPhotonCode(verificationSession, verificationCode)
-      const setup = saveIMessageSetup({ name, session: verificationSession, verification, role, gmailConnected, consent, community, mode, identity, selected })
+      const setup = saveIMessageSetup({ session: verificationSession, verification, role, gmailConnected })
       setSavedSetup(setup)
       setErrors({})
     } catch (error) {
@@ -643,7 +651,9 @@ function OnboardingModal({ role, onClose, onFinish }) {
   async function resendCode() {
     setRequestBusy(true)
     try {
-      const session = await requestPhotonVerification({ name, phone, role })
+      const session = await requestPhotonVerification({
+        name, email, phone, role, consent, community, mode, availability, identity, skills: selected,
+      })
       setVerificationSession(session)
       setVerificationCode('')
       setErrors({})
@@ -659,8 +669,10 @@ function OnboardingModal({ role, onClose, onFinish }) {
     setSavedSetup(null)
     setStep(1)
     setName('')
+    setEmail('')
     setPhone('')
     setCommunity('')
+    setAvailability('Mostly weekends')
     setConsent(false)
     setGmailConnected(false)
     setVerificationSession(null)
@@ -701,13 +713,13 @@ function OnboardingModal({ role, onClose, onFinish }) {
         <span className="setup-success__icon"><BadgeCheck size={42} aria-hidden="true" /></span>
         <span className="eyebrow">You’re connected</span>
         <h2 id="onboarding-title">Froggie can check in privately.</h2>
-        <p>{isHelper ? 'Project matches' : 'Private suggestions'} will go to the iMessage number ending in <strong>{savedSetup.imessage.phoneLast4}</strong>. {isHelper ? 'You can answer right from Messages.' : 'A request still cannot be shared until you approve it.'}</p>
+        <p>{savedSetup.approvalStatus === 'active' ? (isHelper ? 'Project matches can now reach you through iMessage.' : 'Private suggestions can now reach you through iMessage.') : 'Your number is verified. A demo operator still needs to approve your trusted-circle membership before private messages or matching begin.'}</p>
         <div className="connection-summary">
           <div><Smartphone size={20} /><span><strong>Photon iMessage</strong><small>Verified · •••• {savedSetup.imessage.phoneLast4}</small></span><Check size={18} /></div>
-          {!isHelper && <div><span className="gmail-mark">M</span><span><strong>Gmail</strong><small>Connected · read-only</small></span><Check size={18} /></div>}
+          {!isHelper && <div><span className="gmail-mark">M</span><span><strong>Gmail</strong><small>{savedSetup.gmail?.connectionRequested ? 'Connection requested · read-only import still required' : 'Not connected'}</small></span><Check size={18} /></div>}
           <div><ShieldCheck size={20} /><span><strong>{isHelper ? 'Helper profile' : 'Permission'}</strong><small>{isHelper ? 'Ready for matches' : 'Approval required every time'}</small></span><Check size={18} /></div>
         </div>
-        <div className="local-demo-note"><CircleHelp size={17} /><span>Photon carries the message. Froggie stores only the last four digits and setup status in this browser.</span></div>
+        <div className="local-demo-note"><CircleHelp size={17} /><span>Froggie stores your verified profile and consent choices in the private demo database. The browser keeps only setup status, local approval ID <code>{savedSetup.userId}</code>, and the last four digits.</span></div>
       </div>
     )
   } else if (isHelper && step === 1) {
@@ -727,7 +739,7 @@ function OnboardingModal({ role, onClose, onFinish }) {
         <div className="form-grid">
           <fieldset><legend>Project format</legend><div className="choice-row">{['Remote','In person','Both'].map((value) => <label key={value} className={mode === value ? 'choice selected' : 'choice'}><input type="radio" name="helper-mode" checked={mode === value} onChange={() => setMode(value)} />{value}</label>)}</div></fieldset>
           <LocationCombobox value={community} onChange={(nextValue) => { setCommunity(nextValue); setErrors((current) => ({ ...current, location: undefined })) }} error={errors.location} />
-          <label className="field"><span>Availability</span><select defaultValue="weekends"><option value="weekends">Mostly weekends</option><option value="weekdays">Weekdays</option><option value="flexible">Flexible</option></select></label>
+          <label className="field"><span>Availability</span><select value={availability} onChange={(event) => setAvailability(event.target.value)}><option>Mostly weekends</option><option>Weekdays</option><option>Flexible</option></select></label>
           <fieldset><legend>Leaderboard identity</legend><div className="choice-row">{['Name','Nickname','Anonymous'].map((value) => <label key={value} className={identity === value ? 'choice selected' : 'choice'}><input type="radio" name="identity" checked={identity === value} onChange={() => setIdentity(value)} />{value}</label>)}</div></fieldset>
         </div>
       </div>
@@ -747,9 +759,10 @@ function OnboardingModal({ role, onClose, onFinish }) {
         <span className="eyebrow">Email permission</span>
         <h2 id="onboarding-title">Connect the signal, not the conversation.</h2>
         <div className="form-grid">
+          <label className="field"><span>Gmail address</span><input value={email} onChange={(event) => { setEmail(event.target.value); setGmailConnected(false); setErrors((current) => ({ ...current, email: undefined, gmail: undefined })) }} type="email" autoComplete="email" placeholder="you@example.com" aria-invalid={Boolean(errors.email)} />{errors.email && <small className="field-error">{errors.email}</small>}</label>
           <div className={errors.gmail ? 'connect-card connect-card--error' : 'connect-card'}>
-            <div><span className="gmail-mark">M</span><span><strong>Connect Gmail read-only</strong><small>{gmailConnected ? 'Connected with gmail.readonly permission.' : 'Froggie can read messages, but cannot send or change them.'}</small></span></div>
-            <button type="button" className={gmailConnected ? 'button button--connected' : 'button button--outline'} onClick={connectGmail} disabled={gmailConnected || gmailBusy} aria-busy={gmailBusy}>{gmailBusy ? 'Connecting…' : gmailConnected ? <><Check size={16} /> Connected</> : 'Connect'}</button>
+            <div><span className="gmail-mark">M</span><span><strong>Request Gmail read-only setup</strong><small>{gmailConnected ? 'Connection requested. A demo operator must complete OAuth/import.' : 'This does not grant access or claim OAuth is complete.'}</small></span></div>
+            <button type="button" className={gmailConnected ? 'button button--connected' : 'button button--outline'} onClick={connectGmail} disabled={gmailConnected || gmailBusy} aria-busy={gmailBusy}>{gmailBusy ? 'Saving…' : gmailConnected ? <><Check size={16} /> Requested</> : 'Request setup'}</button>
           </div>
           {errors.gmail && <small className="field-error standalone-error">{errors.gmail}</small>}
           <label className={errors.consent ? 'consent-check consent-check--error' : 'consent-check'}><input checked={consent} onChange={(event) => { setConsent(event.target.checked); setErrors((current) => ({ ...current, consent: undefined })) }} type="checkbox" /><span>I understand that Froggie will ask me before sharing any help request.</span></label>
@@ -771,6 +784,7 @@ function OnboardingModal({ role, onClose, onFinish }) {
             <span className="photon-status">{photonStatus.configured ? <><Check size={15} /> Ready</> : 'Setup needed'}</span>
           </div>
           <label className="field"><span>Your name</span><input value={name} onChange={(event) => { setName(event.target.value); setErrors((current) => ({ ...current, name: undefined })) }} type="text" autoComplete="name" placeholder={isHelper ? 'Jordan' : 'Margaret'} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'name-error' : undefined} />{errors.name && <small id="name-error" className="field-error">{errors.name}</small>}</label>
+          {isHelper && <label className="field"><span>Email address</span><input value={email} onChange={(event) => { setEmail(event.target.value); setErrors((current) => ({ ...current, email: undefined })) }} type="email" autoComplete="email" placeholder="you@example.com" aria-invalid={Boolean(errors.email)} />{errors.email && <small className="field-error">{errors.email}</small>}</label>}
           <label className="field"><span>iMessage phone number</span><input value={phone} onChange={(event) => { setPhone(formatPhone(event.target.value)); setErrors((current) => ({ ...current, phone: undefined, integration: undefined })) }} type="tel" inputMode="tel" autoComplete="tel" placeholder="(555) 123-4567" aria-invalid={Boolean(errors.phone)} aria-describedby="phone-help" /><small id="phone-help" className={errors.phone ? 'field-error' : 'field-help'}>{errors.phone || 'Photon will send a six-digit code to this number.'}</small></label>
           {errors.integration && <div className="integration-error" role="alert"><CircleHelp size={18} /><span>{errors.integration}</span></div>}
         </div>
@@ -806,66 +820,10 @@ function OnboardingModal({ role, onClose, onFinish }) {
         </div>
 
         {onboardingBody}
-        {false && (savedSetup ? (
-          <div className="setup-success" aria-live="polite">
-            <span className="setup-success__icon"><BadgeCheck size={42} aria-hidden="true" /></span>
-            <span className="eyebrow">You’re connected</span>
-            <h2 id="onboarding-title">Froggie can check in privately.</h2>
-            <p>{isHelper ? 'Project matches' : 'Private suggestions'} will go to the iMessage number ending in <strong>{savedSetup.imessage.phoneLast4}</strong>. {isHelper ? 'You can answer right from Messages.' : 'A request still cannot be shared until you approve it.'}</p>
-            <div className="connection-summary">
-              <div><Smartphone size={20} /><span><strong>Photon iMessage</strong><small>Verified · •••• {savedSetup.imessage.phoneLast4}</small></span><Check size={18} /></div>
-              {!isHelper && <div><span className="gmail-mark">M</span><span><strong>Gmail</strong><small>Connected · read-only</small></span><Check size={18} /></div>}
-              <div><ShieldCheck size={20} /><span><strong>{isHelper ? 'Helper profile' : 'Permission'}</strong><small>{isHelper ? 'Ready for matches' : 'Approval required every time'}</small></span><Check size={18} /></div>
-            </div>
-            <div className="local-demo-note"><CircleHelp size={17} /><span>Photon carries the message. Froggie stores only the last four digits and setup status in this browser.</span></div>
-          </div>
-        ) : isHelper ? (
-          step === 1 ? (
-            <div className="onboarding-content">
-              <span className="eyebrow">What feels like you?</span><h2 id="onboarding-title">Choose your helping skills</h2><p>Pick as many as you like. You can change these anytime.</p>
-              <fieldset className="skill-picker"><legend className="sr-only">Helping skills</legend>{categories.slice(1).map(({name: skillName, icon: Icon}) => <label key={skillName} className={selected.includes(skillName) ? 'skill-option selected' : 'skill-option'}><input type="checkbox" checked={selected.includes(skillName)} onChange={() => toggleSkill(skillName)} /><Icon size={20} /><span>{skillName}</span>{selected.includes(skillName) && <Check size={17} />}</label>)}</fieldset>
-            </div>
-          ) : (
-            <div className="onboarding-content">
-              <span className="eyebrow">Your helping rhythm</span><h2 id="onboarding-title">When and how can you help?</h2>
-              <div className="form-grid"><fieldset><legend>Project format</legend><div className="choice-row">{['Remote','In person','Both'].map((value) => <label key={value} className={mode === value ? 'choice selected' : 'choice'}><input type="radio" name="helper-mode" checked={mode === value} onChange={() => setMode(value)} />{value}</label>)}</div></fieldset><label className="field"><span>Community or location</span><input type="text" placeholder="Oakland, CA" autoComplete="address-level2" /></label><label className="field"><span>Availability</span><select defaultValue="weekends"><option value="weekends">Mostly weekends</option><option value="weekdays">Weekdays</option><option value="flexible">Flexible</option></select></label><fieldset><legend>Leaderboard identity</legend><div className="choice-row">{['Name','Nickname','Anonymous'].map((value) => <label key={value} className={identity === value ? 'choice selected' : 'choice'}><input type="radio" name="identity" checked={identity === value} onChange={() => setIdentity(value)} />{value}</label>)}</div></fieldset></div>
-            </div>
-          )
-        ) : step === 1 ? (
-          <div className="onboarding-content">
-            <span className="eyebrow">Private by default</span><h2 id="onboarding-title">Let Froggie check in gently</h2><p>Froggie looks only for low-risk, concrete needs and asks you privately through iMessage. It never posts automatically.</p>
-            <div className="privacy-stack"><div><ShieldCheck /><span><strong>Read-only Gmail</strong><small>Froggie can notice possible small projects, but never sends or changes email.</small></span></div><div><MessageCircleHeart /><span><strong>Private iMessage first</strong><small>You approve, edit, or dismiss every suggestion before it goes anywhere.</small></span></div><div><UsersRound /><span><strong>Only your summary is shared</strong><small>Helpers never see the original email conversation.</small></span></div></div>
-          </div>
-        ) : step === 2 ? (
-          <div className="onboarding-content">
-            <span className="eyebrow">Let’s connect</span><h2 id="onboarding-title">How should Froggie reach you?</h2>
-            <div className="form-grid">
-              <label className="field"><span>Your name</span><input value={name} onChange={(event) => { setName(event.target.value); setErrors((current) => ({ ...current, name: undefined })) }} type="text" autoComplete="name" placeholder="Margaret" aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? 'name-error' : undefined} />{errors.name && <small id="name-error" className="field-error">{errors.name}</small>}</label>
-              <label className="field"><span>iMessage phone number</span><input value={phone} onChange={(event) => { setPhone(formatPhone(event.target.value)); setErrors((current) => ({ ...current, phone: undefined })) }} type="tel" inputMode="tel" autoComplete="tel" placeholder="(555) 123-4567" aria-invalid={Boolean(errors.phone)} aria-describedby="phone-help" /><small id="phone-help" className={errors.phone ? 'field-error' : 'field-help'}>{errors.phone || 'Use a number that is signed in to iMessage.'}</small></label>
-              <div className={errors.gmail ? 'connect-card connect-card--error' : 'connect-card'}>
-                <div><span className="gmail-mark">M</span><span><strong>Connect Gmail read-only</strong><small>{gmailConnected ? 'Connected with gmail.readonly permission.' : 'Froggie can read messages, but cannot send or change them.'}</small></span></div>
-                <button type="button" className={gmailConnected ? 'button button--connected' : 'button button--outline'} onClick={connectGmail} disabled={gmailConnected || gmailBusy} aria-busy={gmailBusy}>{gmailBusy ? 'Connecting…' : gmailConnected ? <><Check size={16} /> Connected</> : 'Connect'}</button>
-              </div>
-              {errors.gmail && <small className="field-error standalone-error">{errors.gmail}</small>}
-              <label className={errors.consent ? 'consent-check consent-check--error' : 'consent-check'}><input checked={consent} onChange={(event) => { setConsent(event.target.checked); setErrors((current) => ({ ...current, consent: undefined })) }} type="checkbox" /><span>I understand that Froggie will ask me before sharing any help request.</span></label>
-              {errors.consent && <small className="field-error standalone-error">{errors.consent}</small>}
-              <div className="local-demo-note"><CircleHelp size={17} /><span>Local demo: the next step creates an on-screen test code. No message leaves this device.</span></div>
-            </div>
-          </div>
-        ) : (
-          <div className="onboarding-content verification-step">
-            <span className="verification-icon"><Smartphone size={30} aria-hidden="true" /></span>
-            <span className="eyebrow">Verify iMessage</span><h2 id="onboarding-title">Enter your private check-in code</h2>
-            <p>For this localhost demo, use <strong>2468</strong>. In production, this code would arrive at the number ending in <strong>{verificationSession?.phoneLast4}</strong>.</p>
-            <label className="field code-field"><span>Four-digit code</span><input value={verificationCode} onChange={(event) => { setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 4)); setErrors({}) }} type="text" inputMode="numeric" autoComplete="one-time-code" placeholder="0000" aria-invalid={Boolean(errors.code)} aria-describedby={errors.code ? 'code-error' : 'code-help'} /><small id={errors.code ? 'code-error' : 'code-help'} className={errors.code ? 'field-error' : 'field-help'}>{errors.code || 'The demo code expires after 10 minutes.'}</small></label>
-            <button type="button" className="resend-button" onClick={resendCode} disabled={requestBusy}>{requestBusy ? 'Creating a fresh code…' : 'Create a fresh demo code'}</button>
-            <div className="privacy-note verification-note"><ShieldCheck size={17} /><div><strong>Still private.</strong><span>Verification connects the channel; it does not approve any request.</span></div></div>
-          </div>
-        ))}
 
         <div className="onboarding-footer">
           {savedSetup ? (
-            <><button className="button button--quiet" onClick={resetIMessageSetup}>Set up a different number</button><button className="button button--primary" onClick={() => onFinish(isHelper ? 'Photon iMessage is connected for helper matches.' : 'Photon iMessage is connected. Froggie will always ask before sharing.')}>Done <Check size={17} /></button></>
+            <><button className="button button--quiet" onClick={resetIMessageSetup}>Set up a different number</button><button className="button button--primary" onClick={() => onFinish(savedSetup.approvalStatus === 'active' ? 'Froggie is connected with your saved consent choices.' : 'Phone verified. Trusted-circle approval is still pending.')}>Done <Check size={17} /></button></>
           ) : (
             <>{step > 1 && <button className="button button--quiet" onClick={() => { setStep((current) => current - 1); setErrors({}) }}>Back</button>}<button className="button button--primary" onClick={handlePrimaryAction} disabled={requestBusy || verifyBusy || (photonStatus.loading && step === 3)} aria-busy={requestBusy || verifyBusy}>{requestBusy ? 'Sending through Photon…' : verifyBusy ? 'Verifying…' : primaryLabel} {!requestBusy && !verifyBusy && (step === totalSteps ? <Check size={17} /> : <ArrowRight size={17} />)}</button></>
           )}
@@ -904,7 +862,7 @@ export default function App() {
   function claimProject(project) {
     if (!claimedIds.includes(project.id)) setClaimedIds((ids) => [...ids, project.id])
     setSelectedProject(null)
-    setToast(`${project.title} is now in My projects. Froggie will guide the handoff.`)
+    setToast(`${project.title} was added to the browser-only demo. No real request was claimed.`)
   }
   return <div className="app-shell"><Header view={view} setView={setView} onOpenOnboarding={setOnboardingRole} />{viewContent}<Footer setView={setView} /><nav className="mobile-bottom-nav" aria-label="Quick navigation"><button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><Home /><span>Home</span></button><button className={view === 'community' ? 'active' : ''} onClick={() => setView('community')}><Compass /><span>Projects</span></button><button className={view === 'my-projects' ? 'active' : ''} onClick={() => setView('my-projects')}><Heart /><span>Mine</span></button><button className={view === 'leaderboard' ? 'active' : ''} onClick={() => setView('leaderboard')}><Trophy /><span>Garden</span></button></nav>{selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} onClaim={claimProject} claimed={claimedIds.includes(selectedProject.id)} />}{onboardingRole && <OnboardingModal role={onboardingRole} onClose={() => setOnboardingRole(null)} onFinish={(message) => { setOnboardingRole(null); setToast(message); if (onboardingRole === 'helper') setView('community') }} />}{toast && <Toast message={toast} onClose={() => setToast('')} />}</div>
 }

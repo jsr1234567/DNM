@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c green,cyan \"npm:dev:server\" \"npm:dev:web\"",
     "dev:web": "vite --host 127.0.0.1",
-    "dev:server": "node --env-file-if-exists=.env --watch server/index.js",
+    "dev:server": "bun --watch server/index.js",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "start": "node --env-file-if-exists=.env server/index.js"
+    "start": "bun server/index.js"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -20,7 +20,8 @@
     "react": "latest",
     "react-dom": "latest",
     "lucide-react": "latest",
-    "spectrum-ts": "latest"
+    "spectrum-ts": "^12.8.0",
+    "@spectrum-ts/imessage": "12.8.0"
   },
   "devDependencies": {}
 }

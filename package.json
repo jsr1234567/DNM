@@ -12,6 +12,7 @@
     "db:reset": "bun scripts/reset-local-data.ts",
     "db:reset:user": "bun scripts/reset-user-data.ts",
     "users:add": "bun scripts/add-local-user.ts",
+    "users:approve": "bun scripts/approve-local-user.ts",
     "gmail:import": "bun scripts/import-gmail.ts",
     "memory:generate": "bun scripts/generate-memory.ts",
     "bounties:generate": "bun scripts/generate-bounties.ts",

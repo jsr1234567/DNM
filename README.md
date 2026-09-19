@@ -23,6 +23,21 @@ photon whoami || photon login
 bun start
 ```
 
+The merged Froggie web experience is in `froggie-web/`. Its signup flow verifies
+an iMessage number through Photon and persists consent plus helper preferences to
+this same local database. New signups are paused until an operator admits them to
+the trusted circle; the web Gmail step requests setup but does not pretend OAuth
+has completed. Run it separately with:
+
+```sh
+cd froggie-web
+npm install
+npm run dev
+```
+
+The visible project feed is an illustrative UI preview. Canonical bounties remain
+private to the trusted-circle iMessage workflow described below.
+
 Open [http://localhost:3000](http://localhost:3000) to register an iMessage user.
 The form sends contact details to the local server, which registers the user with
 the DNM Photon project and displays their assigned iMessage number. Photon project
@@ -35,6 +50,13 @@ consenting demo user to the local allowlist and trusted circle:
 bun run users:add --id=alex --name="Alex Rivera" --sender-id=+12025550103 \
   --phone=+12025550103 --email=alex@example.com --source=gmail \
   --consent --find-help --offer-help
+```
+
+Web signups return their generated user ID and can instead be approved after
+verification:
+
+```sh
+bun run users:approve --user-id=<web-user-id>
 ```
 
 `--find-help` and `--offer-help` are separate consent flags. Inbound events are

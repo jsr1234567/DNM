@@ -12,10 +12,11 @@ export function formatPhone(value) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
 }
 
-export function validateIMessageIdentity({ name, phone }) {
+export function validateIMessageIdentity({ name, email, phone }) {
   const errors = {}
   if (!name.trim()) errors.name = 'Add the name Froggie should use.'
   if (normalizePhone(phone).length !== 10) errors.phone = 'Enter a 10-digit iMessage phone number.'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = 'Enter a valid email address.'
   return errors
 }
 
@@ -35,11 +36,11 @@ export async function getPhotonStatus() {
   return readJson(response)
 }
 
-export async function requestPhotonVerification({ name, phone, role }) {
+export async function requestPhotonVerification(details) {
   const response = await fetch('/api/imessage/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: name.trim(), phone: normalizePhone(phone), role }),
+    body: JSON.stringify({ ...details, name: details.name.trim(), email: details.email.trim().toLowerCase(), phone: normalizePhone(details.phone) }),
   })
   return readJson(response)
 }
@@ -54,14 +55,15 @@ export async function verifyPhotonCode(session, code) {
 }
 
 function storageKey(role) {
-  return `${SETUP_STORAGE_PREFIX}.${role}.v1`
+  return `${SETUP_STORAGE_PREFIX}.${role}.v2`
 }
 
-export function saveIMessageSetup({ name, session, verification, role, gmailConnected, consent, community, mode, identity, selected }) {
+export function saveIMessageSetup({ session, verification, role, gmailConnected }) {
   const setup = {
-    version: 1,
+    version: 2,
     role,
-    name: name.trim(),
+    userId: verification.userId,
+    approvalStatus: verification.approvalStatus,
     provider: 'photon',
     imessage: {
       connected: true,
@@ -69,16 +71,8 @@ export function saveIMessageSetup({ name, session, verification, role, gmailConn
       verifiedAt: verification.verifiedAt || new Date().toISOString(),
     },
     ...(role === 'requester' ? {
-      gmail: { connected: gmailConnected, scope: 'gmail.readonly' },
-      consent: { approvalRequired: consent, acceptedAt: new Date().toISOString() },
-    } : {
-      helperProfile: {
-        community,
-        mode,
-        identity,
-        skills: selected,
-      },
-    }),
+      gmail: { connected: false, connectionRequested: gmailConnected, scope: 'gmail.readonly' },
+    } : {}),
   }
   localStorage.setItem(storageKey(role), JSON.stringify(setup))
   return setup
@@ -86,6 +80,7 @@ export function saveIMessageSetup({ name, session, verification, role, gmailConn
 
 export function loadIMessageSetup(role) {
   try {
+    localStorage.removeItem(`${SETUP_STORAGE_PREFIX}.${role}.v1`)
     const raw = localStorage.getItem(storageKey(role))
     return raw ? JSON.parse(raw) : null
   } catch {
@@ -95,4 +90,5 @@ export function loadIMessageSetup(role) {
 
 export function clearIMessageSetup(role) {
   localStorage.removeItem(storageKey(role))
+  localStorage.removeItem(`${SETUP_STORAGE_PREFIX}.${role}.v1`)
 }
