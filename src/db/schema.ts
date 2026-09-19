@@ -1,9 +1,19 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const schemaSql = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
   version INTEGER PRIMARY KEY,
   applied_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS mock_mailboxes (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL UNIQUE,
+  owner_name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  phone TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  seeded_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS email_messages (
@@ -29,6 +39,8 @@ CREATE TABLE IF NOT EXISTS email_messages (
 CREATE INDEX IF NOT EXISTS email_messages_thread_idx
   ON email_messages(provider_thread_id, internal_date_ms);
 CREATE INDEX IF NOT EXISTS email_messages_date_idx ON email_messages(internal_date_ms DESC);
+CREATE INDEX IF NOT EXISTS email_messages_mailbox_idx
+  ON email_messages(mailbox_email, internal_date_ms DESC);
 
 CREATE TABLE IF NOT EXISTS chunks (
   id INTEGER PRIMARY KEY,
