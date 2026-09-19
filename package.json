@@ -11,6 +11,7 @@
     "db:reindex": "bun scripts/rebuild-indexes.ts",
     "db:reset": "bun scripts/reset-local-data.ts",
     "gmail:import": "bun scripts/import-gmail.ts",
+    "memory:generate": "bun scripts/generate-memory.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

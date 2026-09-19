@@ -54,6 +54,18 @@ The import excludes spam/trash, stores no attachments, upserts Gmail message IDs
 and records whether each run completed or was partial. Canonical messages live in
 `.data/dnm.sqlite`; FTS/vector indexes are rebuildable derivatives:
 
+With `OPENROUTER_API_KEY` configured in the project-local `.env`, extract a bounded
+set of source-backed memories with Gemini 3.8 Flash and generate a private profile:
+
+```sh
+bun run memory:generate --confirm-mailbox=you@example.com --threads=25
+```
+
+The model defaults to `google/gemini-3.8-flash` through OpenRouter. Override it only
+for local experiments with `OPENROUTER_MODEL`. The generated `.data/memory.md` is a
+gitignored projection; SQLite remains the canonical store. To regenerate the file
+without rereading email threads, pass `--profile-only`.
+
 ```sh
 bun run db:reindex
 bun test
