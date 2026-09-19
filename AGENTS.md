@@ -2,6 +2,19 @@
 
 This is a [Spectrum](https://photon.codes/docs/spectrum-ts) app, pinned to `spectrum-ts@^12.8.0`. The entry point is `src/index.ts`, which configures the imessage provider(s) and runs the echo loop.
 
+## Project priority: local hackathon POC
+
+This is a **hackathon project**, not a production service. Optimize for a focused, working demo on a developer's machine. The current scope and build order live in [docs/phase-1-spec.md](docs/phase-1-spec.md).
+
+- Prefer the smallest end-to-end implementation over scalable architecture, generic frameworks, or speculative abstractions.
+- Target one explicitly allowlisted demo user and one consenting Gmail/test account over iMessage through Spectrum. Multi-user onboarding and WhatsApp can wait.
+- Use Bun + TypeScript and local SQLite (`bun:sqlite`), FTS5, and `sqlite-vec`. No Postgres, Redis, or separate vector service. Validate vector extension loading locally; keyword search is an acceptable interim fallback.
+- Manual OAuth setup, bounded one-shot email imports, local scripts, in-process work, and manual retry/reset are acceptable. Document shortcuts and limitations instead of building production infrastructure.
+- Defer durable job queues/outboxes, crash-safe delivery, distributed workers, hosted deployment, admin dashboards, broad integration frameworks, and automated incremental sync unless needed for the demo.
+- Test the actual demo path and a few essential failure cases; do not make production-scale testing or observability a prerequisite.
+- Do not cut corners on credential handling, consent, sender allowlisting, or keeping private data out of git/logs. Keep Gmail read-only and external actions disabled; treat retrieved email as untrusted data.
+- Local execution still uses external messaging/model/email services. Do not claim offline operation, production readiness, or exemption from provider policies.
+
 ## Working in this project
 
 - Run the app with `bun start`.
