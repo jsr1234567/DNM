@@ -13,14 +13,17 @@
     "db:reset:user": "bun scripts/reset-user-data.ts",
     "users:add": "bun scripts/add-local-user.ts",
     "users:approve": "bun scripts/approve-local-user.ts",
+    "gmail:authorize": "bun --env-file=.env scripts/authorize-gmail.ts",
     "gmail:import": "bun scripts/import-gmail.ts",
     "memory:generate": "bun scripts/generate-memory.ts",
     "bounties:generate": "bun scripts/generate-bounties.ts",
     "bounties:match": "bun scripts/match-bounties.ts",
+    "seed:demo": "bun src/demo/seed.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "spectrum-ts": "^12.8.0",
     "sqlite-vec": "0.1.8"
   },

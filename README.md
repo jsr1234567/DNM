@@ -15,6 +15,21 @@ From your project Settings on the [Photon dashboard](https://app.photon.codes):
 The iMessage reply loop uses `google/gemini-3.8-flash` through OpenRouter by
 default. Set `OPENROUTER_MODEL` to override it for local experiments.
 
+For proactive suggestions from newly observed Gmail messages, configure a Google
+OAuth client authorized only for `gmail.readonly`:
+
+- `GOOGLE_GMAIL_CLIENT_ID` / `PERSONAL_GOOGLE_CLIENT_ID`
+- `GOOGLE_GMAIL_CLIENT_SECRET` / `PERSONAL_GOOGLE_CLIENT_SECRET`
+- `GOOGLE_GMAIL_REFRESH_TOKEN`
+- `FROGGIE_GMAIL_FROM` — the exact Margaret sender address to watch
+- `FROGGIE_GMAIL_OWNER_ID` — the matching local participant ID
+
+The watcher establishes a baseline on first start and polls every 30 seconds.
+Only a newly seen, low-risk match produces a private suggestion. Nothing is sent
+to the community site until the recipient replies `YES` or approves an `EDIT:`.
+Approved requests are published when `TURSO_DATABASE_URL` and
+`TURSO_AUTH_TOKEN` are configured.
+
 ## Run
 
 ```sh
@@ -22,6 +37,9 @@ bun install
 photon whoami || photon login
 bun start
 ```
+
+For the fictional Margaret fixture, run `bun run seed:demo`. To create or renew
+the read-only Gmail grant, run `bun run gmail:authorize`.
 
 The merged Froggie web experience is in `froggie-web/`. Its signup flow verifies
 an iMessage number through Photon and persists consent plus helper preferences to
@@ -158,6 +176,10 @@ bun run db:reindex
 bun test
 bun run typecheck
 ```
+
+The localhost community API is documented in
+[docs/phase-1-spec.md](docs/phase-1-spec.md), with UI notes in
+[docs/ui-brief.md](docs/ui-brief.md).
 
 To clear local email, indexes, memories, chat history, and Gmail token files, stop
 the app/import first and run the explicitly destructive reset:

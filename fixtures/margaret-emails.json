@@ -1,0 +1,74 @@
+[
+  {
+    "providerMessageId": "fixture-001",
+    "threadId": "garden-club-site",
+    "fromAddress": "margaret@example.test",
+    "toAddresses": ["son@example.test"],
+    "subject": "Garden club notes",
+    "bodyText": "The garden club meeting was lovely. Everyone keeps asking whether we could have a simple website with the meeting dates and a few photographs, but I would not know where to begin with that.",
+    "sentAt": "2026-09-08T17:20:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-002",
+    "threadId": "garden-club-site",
+    "fromAddress": "son@example.test",
+    "toAddresses": ["margaret@example.test"],
+    "subject": "Re: Garden club notes",
+    "bodyText": "That sounds like a fun project. Send me the meeting dates when you have them. I am glad the tomatoes finally came in.",
+    "sentAt": "2026-09-08T18:04:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-003",
+    "threadId": "quiet-tuesday",
+    "fromAddress": "margaret@example.test",
+    "toAddresses": ["son@example.test"],
+    "subject": "A quiet Tuesday",
+    "bodyText": "I made the tomato soup you like and spent most of the afternoon reading. The weather was perfect after lunch.",
+    "sentAt": "2026-09-10T22:11:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-004",
+    "threadId": "pantry-clip",
+    "fromAddress": "margaret@example.test",
+    "toAddresses": ["son@example.test"],
+    "subject": "That little pantry clip",
+    "bodyText": "The small plastic clip that holds the pantry label broke again. It seems silly to replace the whole organizer when a replacement part could probably be 3D printed.",
+    "sentAt": "2026-09-12T16:30:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-005",
+    "threadId": "autumn-potluck",
+    "fromAddress": "margaret@example.test",
+    "toAddresses": ["son@example.test"],
+    "subject": "Autumn potluck",
+    "bodyText": "We would like to organize a small autumn potluck at the community garden. Keeping track of the food and invitations is already getting confusing.",
+    "sentAt": "2026-09-14T19:42:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-006",
+    "threadId": "grocery-order",
+    "fromAddress": "son@example.test",
+    "toAddresses": ["margaret@example.test"],
+    "subject": "Weekly groceries",
+    "bodyText": "You mentioned wanting help setting up a recurring grocery order. We can look at it together, or perhaps someone nearby already knows the store's website.",
+    "sentAt": "2026-09-16T02:15:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-007",
+    "threadId": "library-afternoon",
+    "fromAddress": "margaret@example.test",
+    "toAddresses": ["son@example.test"],
+    "subject": "Library afternoon",
+    "bodyText": "I met a friendly woman at the library lecture today. We talked about mystery novels and stayed until closing.",
+    "sentAt": "2026-09-17T23:05:00.000Z"
+  },
+  {
+    "providerMessageId": "fixture-008",
+    "threadId": "appointment-update",
+    "fromAddress": "margaret@example.test",
+    "toAddresses": ["son@example.test"],
+    "subject": "Appointment update",
+    "bodyText": "My doctor changed a prescription today. I have the clinic's instructions and do not need anyone else to do anything.",
+    "sentAt": "2026-09-18T20:10:00.000Z"
+  }
+]

@@ -1,15 +1,33 @@
-# Brand — DNM
+# Froggie the Helper
 
-_Status: deferred_
+## Brand idea
 
-The user chose to defer brand setup. This project is currently using shadcn's default neutral palette and no custom typography. The `frontend-design-guidelines` skill will quietly use defaults and will not prompt again.
+Froggie is a cheerful community mascot that helps turn small, everyday needs into friendly, requester-approved projects.
 
-To set up a real brand palette, typography, and voice at any time, run:
+The product should feel neighborly, playful, warm, and dignity-preserving. It should not feel like surveillance, charity bureaucracy, a gig marketplace, or a childish toy.
 
-    /brand-design
+## Voice
 
-or say: "pick brand colors"
+- Kind and concise
+- Optimistic without making promises
+- Clear about privacy and consent
+- Uses “help request,” “small project,” “helper,” and “community”
+- Avoids “case,” “patient,” “beneficiary,” and “task worker”
 
-When `brand-design` runs, it will detect this deferred state, skip the "confirm overwrite" step, and proceed directly to the full brand setup. The resulting palette will be applied to `app/globals.css` and this file will be replaced with the real brand documentation.
+Example lines:
 
-_Deferred at: 2026-09-19T14:30:00-07:00_
+- “A little help goes a long way.”
+- “Small projects. Real neighbors. Better days.”
+- “Nothing is shared until you say so.”
+- “Hop in and lend a hand.”
+
+## Visual direction
+
+- Cozy maximalism with a polished finish
+- Soft greens, warm cream, and coral or yellow accents
+- Lily-pad and garden motifs used sparingly
+- Rounded cards, expressive typography, stamps, badges, and small illustrations
+- Mobile-first, readable, and accessible
+- Avoid generic SaaS gradients, corporate dashboards, crypto styling, and excessive glassmorphism
+
+The visual system must include visible focus states, large touch targets, accessible contrast, reduced-motion handling, and clear empty/loading/error/privacy states.

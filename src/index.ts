@@ -13,6 +13,16 @@ import { extractBountyDrafts } from "./bounties/extract.ts";
 import { runBountyMatching } from "./bounties/match.ts";
 import { draftPrompt } from "./bounties/present.ts";
 import { loadDemoProfile } from "./demo/profile.ts";
+import { handleCommunityApi } from "./api/community.ts";
+import { ingestEmailForSuggestions } from "./core/email-intake.ts";
+import { FroggieRepository } from "./core/repository.ts";
+import { gmailWatchConfiguration, startGmailWatcher } from "./email/gmail.ts";
+import { handleFroggieMessage } from "./messaging/froggie.ts";
+import { notifySuggestion } from "./messaging/notifications.ts";
+import {
+  cloudPublishConfiguration,
+  communityPublisherFromEnvironment,
+} from "./publishing/vercel-community.ts";
 
 const projectId = process.env.PROJECT_ID ?? "";
 
@@ -35,6 +45,9 @@ const app = await Spectrum({
 });
 const db = await openDatabase();
 const llm = new OpenRouterClient();
+const communityRepository = new FroggieRepository();
+const messaging = imessage(app);
+const communityPublisher = communityPublisherFromEnvironment();
 const demoProfile = await loadDemoProfile(db);
 if (demoProfile) {
   console.log(`Bound stage sender to fixture persona ${demoProfile.userId}.`);
@@ -198,6 +211,14 @@ const server = Bun.serve({
   async fetch(request) {
     const url = new URL(request.url);
 
+    const communityResponse = await handleCommunityApi(
+      request,
+      url,
+      communityRepository,
+      { onSuggestion: (suggestion) => notifySuggestion(communityRepository, messaging, suggestion) },
+    );
+    if (communityResponse) return communityResponse;
+
     if (request.method === "POST" && url.pathname === "/api/register") {
       return registerUser(request);
     }
@@ -229,12 +250,59 @@ const server = Bun.serve({
 
 console.log(`DNM signup is ready at http://localhost:${server.port}`);
 
+const gmail = gmailWatchConfiguration();
+if (gmail.configured) {
+  if (!communityRepository.findParticipantById(gmail.config.ownerId) && demoProfile) {
+    communityRepository.registerParticipant({
+      id: gmail.config.ownerId,
+      displayName: demoProfile.name,
+      email: demoProfile.email,
+      phone: demoProfile.senderId,
+      community: "general",
+      leaderboardVisibility: "anonymous",
+    });
+  }
+  if (communityRepository.findParticipantById(gmail.config.ownerId)) {
+    startGmailWatcher(communityRepository, gmail.config, async (email) => {
+      const { suggestions } = ingestEmailForSuggestions(communityRepository, email);
+      for (const suggestion of suggestions) {
+        await notifySuggestion(communityRepository, messaging, suggestion);
+      }
+    });
+    console.log("Gmail watcher is ready for new Margaret messages.");
+  } else {
+    console.warn(
+      `Gmail watcher needs participant ${gmail.config.ownerId}; run bun run seed:demo or configure a matching owner.`,
+    );
+  }
+} else {
+  console.log(`Gmail watcher is waiting for ${gmail.missing.join(", ")}.`);
+}
+
+const cloudPublishing = cloudPublishConfiguration();
+if (communityPublisher) {
+  const syncUnpublishedRequests = async () => {
+    for (const { request, requester } of communityRepository.listUnpublishedOpenRequests()) {
+      try {
+        await communityPublisher(request, requester);
+        communityRepository.markRequestPublished(request.id);
+      } catch {
+        console.error("Froggie could not sync an approved request to the community site.");
+      }
+    }
+  };
+  void syncUnpublishedRequests();
+  setInterval(() => void syncUnpublishedRequests(), 30_000);
+  console.log("Community-site publishing is connected.");
+} else if (!cloudPublishing.configured) {
+  console.log(`Community-site publishing is waiting for ${cloudPublishing.missing.join(", ")}.`);
+}
+
 async function deliverPrivateMessage(userId: string, content: string): Promise<void> {
   const user = getUser(db, userId);
   if (!user || user.status !== "active") throw new Error("Active recipient not found");
-  const platform = imessage(app);
-  const recipient = await platform.user(user.spectrumSenderId);
-  const directMessage = await platform.space.create(recipient);
+  const recipient = await messaging.user(user.spectrumSenderId);
+  const directMessage = await messaging.space.create(recipient);
   await directMessage.send(content);
 }
 
@@ -268,6 +336,21 @@ async function runMessageLoop() {
       continue;
     }
 
+    const existingCommunityParticipant =
+      communityRepository.findParticipantByContact(user.spectrumSenderId) ??
+      (user.profileEmail
+        ? communityRepository.findParticipantByContact(user.profileEmail)
+        : undefined);
+    communityRepository.registerParticipant({
+      id: existingCommunityParticipant?.id ?? user.id,
+      displayName: user.displayName,
+      email: user.profileEmail ?? existingCommunityParticipant?.email,
+      phone: user.spectrumSenderId,
+      community: existingCommunityParticipant?.community ?? "general",
+      leaderboardVisibility:
+        existingCommunityParticipant?.leaderboardVisibility ?? "anonymous",
+    });
+
     const inserted = recordChatMessage(db, {
       userId: user.id,
       providerMessageId: message.id,
@@ -281,6 +364,17 @@ async function runMessageLoop() {
 
     updateProcessingStatus(db, user.id, message.id, "processing");
     try {
+      if (
+        await handleFroggieMessage(
+          communityRepository,
+          space,
+          message,
+          communityPublisher,
+        )
+      ) {
+        updateProcessingStatus(db, user.id, message.id, "processed");
+        continue;
+      }
       await space.responding(async () => {
         const command = await handleBountyCommand(
           db, user.id, inboundText, deliverPrivateMessage,
